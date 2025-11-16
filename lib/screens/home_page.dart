@@ -1,34 +1,37 @@
 import 'package:flutter/material.dart';
+import 'package:educycle/constants/colors.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    const Color primaryColor = Color(0xFF1E3A8A); 
-    const Color accentColor = Color(0xFFF59E0B);
-    const Color backgroundColor = Color(0xFFF5F5F5);
+    final primaryColor = AppColors.primaryBlue;
+    final accentColor = AppColors.secondaryOrange;
+    final backgroundColor = AppColors.backgroundLightBlue;
 
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: primaryColor,
         centerTitle: true,
-        title: const Text(
+        title: Text(
           'EduCycle',
           style: TextStyle(
-            color: Color(0xFFF59E0B),
+            color: accentColor,
             fontWeight: FontWeight.bold,
-            fontSize: 30
+            fontSize: 30,
           ),
         ),
         actions: [
           IconButton(
             onPressed: () {},
-            icon: const Icon(Icons.notifications, color: Color(0xFFF59E0B)),
+            icon: Icon(Icons.notifications, color: accentColor),
           ),
         ],
       ),
+
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -38,16 +41,15 @@ class HomePage extends StatelessWidget {
               'Selamat Datang,',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
+
             const SizedBox(height: 10),
             Card(
               elevation: 5,
-              shadowColor: const Color(
-                0xFF1E3A8A,
-              ).withOpacity(0.3),
+              shadowColor: primaryColor.withOpacity(0.3),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
-                side: const BorderSide(
-                  color: Color(0xFF1E3A8A),
+                side: BorderSide(
+                  color: primaryColor,
                   width: 1.5,
                 ),
               ),
@@ -59,20 +61,20 @@ class HomePage extends StatelessWidget {
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
+                        children: const [
+                          Text(
                             'Juliyando Akbar',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          const Text('F1E123029'),
-                          const Text('Peminjam'),
-                          const SizedBox(height: 8),
+                          SizedBox(height: 4),
+                          Text('F1E123029'),
+                          Text('Peminjam'),
+                          SizedBox(height: 8),
                           Row(
-                            children: const [
+                            children: [
                               Icon(Icons.person_outline, size: 18),
                               SizedBox(width: 6),
                               Text('Mahasiswa'),
@@ -92,7 +94,7 @@ class HomePage extends StatelessWidget {
             ),
 
             const SizedBox(height: 20),
-
+            
             GridView.count(
               crossAxisCount: 3,
               shrinkWrap: true,
@@ -201,11 +203,11 @@ class HomePage extends StatelessWidget {
           decoration: BoxDecoration(
             color: color,
             borderRadius: BorderRadius.circular(5),
-            boxShadow: [
+            boxShadow: const [
               BoxShadow(
                 color: Colors.black12,
                 blurRadius: 4,
-                offset: const Offset(2, 2),
+                offset: Offset(2, 2),
               ),
             ],
           ),
@@ -215,7 +217,10 @@ class HomePage extends StatelessWidget {
         Text(
           label,
           textAlign: TextAlign.center,
-          style: TextStyle(color: textColor, fontWeight: FontWeight.w600),
+          style: TextStyle(
+            color: textColor,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ],
     );
