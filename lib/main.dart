@@ -4,6 +4,8 @@ import 'package:educycle/screens/login_page.dart';
 import 'package:educycle/screens/home_page.dart';
 import 'package:educycle/screens/profile_page.dart';
 import 'package:educycle/screens/settings/setting_page.dart';
+import 'package:educycle/screens/settings/language_page.dart';
+
 
 
 void main() {
@@ -28,6 +30,7 @@ class MyApp extends StatelessWidget {
         '/home': (context) => const HomePage(),
         '/profile': (context) => const ProfilePage(),
         '/settings': (context) => const SettingsPage(),
+        '/bahasa': (context) => const LanguagePage(),
       },
     );
   }

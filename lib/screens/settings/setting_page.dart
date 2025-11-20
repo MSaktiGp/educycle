@@ -151,7 +151,7 @@ class SettingsPage extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.primaryBlue, width: 1.5),
+          border: Border.all(color: AppColors.primaryBlue, width: 1.3),
 
         ),
         child: Row(
