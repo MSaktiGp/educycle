@@ -77,7 +77,7 @@ class _LanguagePageState extends State<LanguagePage> {
                     "Terapkan",
                     style: TextStyle(
                       fontSize: 18,
-                      color: Color(0xFFF59E0B),
+                      color: Colors.white,
                       fontWeight: FontWeight.bold,
                     ),
                   ),

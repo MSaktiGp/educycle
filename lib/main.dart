@@ -5,6 +5,9 @@ import 'package:educycle/screens/home_page.dart';
 import 'package:educycle/screens/profile_page.dart';
 import 'package:educycle/screens/settings/setting_page.dart';
 import 'package:educycle/screens/settings/language_page.dart';
+import 'package:educycle/screens/settings/faq_page.dart';
+import 'package:educycle/screens/settings/laporan_masalah_page.dart';
+
 
 
 
@@ -31,6 +34,9 @@ class MyApp extends StatelessWidget {
         '/profile': (context) => const ProfilePage(),
         '/settings': (context) => const SettingsPage(),
         '/bahasa': (context) => const LanguagePage(),
+        '/faq': (context) => const FAQPage(),
+        '/laporan_masalah': (context) => const LaporanMasalahPage(),
+
       },
     );
   }
