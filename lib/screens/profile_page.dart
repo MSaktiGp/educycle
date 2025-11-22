@@ -54,7 +54,7 @@ class ProfilePage extends StatelessWidget {
                 
                 // Tombol Notifikasi
                 InkWell(
-                  onTap: () => Navigator.pushNamed(context, '/notifications'),
+                  onTap: () => Navigator.pushNamed(context, '/notification'),
                   child: const Icon(Icons.notifications_none, color: Color(0xFFF59E0B), size: 28),
                 ),
               ],
