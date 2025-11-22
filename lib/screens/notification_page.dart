@@ -7,8 +7,7 @@ class NotificationPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Background abu-abu muda, sesuai skema Home/Profile
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: Color(0xFFF5F5F5),
       
       // 1. App Bar
       appBar: AppBar(
@@ -27,7 +26,7 @@ class NotificationPage extends StatelessWidget {
         title: const Text(
           'Notifikasi',
           style: TextStyle(
-            color: AppColors.secondaryOrange, // Teks judul oranye
+            color: AppColors.secondaryOrange,
             fontWeight: FontWeight.bold,
             fontSize: 24,
           ),
