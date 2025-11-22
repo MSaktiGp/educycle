@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:educycle/constants/colors.dart';
 
+
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
@@ -8,7 +9,7 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final primaryColor = AppColors.primaryBlue;
     final accentColor = AppColors.secondaryOrange;
-    final backgroundColor = AppColors.backgroundLightBlue;
+    final backgroundColor = Color(0xFFF5F5F5);
 
     return Scaffold(
       backgroundColor: backgroundColor,
