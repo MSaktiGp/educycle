@@ -114,45 +114,6 @@ class NotificationPage extends StatelessWidget {
           ],
         ),
       ),
-      
-      // 3. Bottom Navigation Bar (Bottom Bar)
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: AppColors.primaryBlue,
-          border: Border(
-            top: BorderSide(
-              color: AppColors.secondaryOrange,
-              width: 3,
-            ),
-          ),
-        ),
-        child: BottomNavigationBar(
-          backgroundColor: AppColors.primaryBlue,
-          selectedItemColor: AppColors.secondaryOrange, 
-          unselectedItemColor: Colors.white,
-          iconSize: 35,
-          // Karena ini halaman notifikasi, tidak ada item yang aktif di Bottom Bar
-          currentIndex: 0, 
-          type: BottomNavigationBarType.fixed,
-          selectedFontSize: 0,
-          unselectedFontSize: 0,
-          onTap: (index) {
-            // Logika navigasi BottomBar (asumsi rute sudah didefinisikan)
-            if (index == 0) {
-              Navigator.pushReplacementNamed(context, '/home');
-            } else if (index == 1) {
-              Navigator.pushReplacementNamed(context, '/settings');
-            } else if (index == 2) {
-              Navigator.pushReplacementNamed(context, '/profile');
-            }
-          },
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
-            BottomNavigationBarItem(icon: Icon(Icons.settings), label: ''),
-            BottomNavigationBarItem(icon: Icon(Icons.person), label: ''),
-          ],
-        ),
-      ),
     );
   }
 
