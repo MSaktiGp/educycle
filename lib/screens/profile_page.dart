@@ -172,7 +172,7 @@ class ProfilePage extends StatelessWidget {
               Navigator.pushReplacementNamed(context, '/home');
             } else if (index == 1) {
               // Navigasi ke Settings (jika ada)
-              // Navigator.pushReplacementNamed(context, '/settings');
+              Navigator.pushReplacementNamed(context, '/settings');
             }
             // Jika index == 2, tetap di halaman ini
           },
