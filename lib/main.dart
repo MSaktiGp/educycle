@@ -15,12 +15,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'EduCycle',
-      theme: ThemeData(
-        primaryColor: AppColors.primaryBlue,
-        useMaterial3: true,
-      ),
+      theme: ThemeData(primaryColor: AppColors.primaryBlue, useMaterial3: true),
       debugShowCheckedModeBanner: false,
-      initialRoute: '/profile',
+      initialRoute: '/',
       routes: {
         '/': (context) => const LoginPage(),
         '/home': (context) => const HomePage(),
