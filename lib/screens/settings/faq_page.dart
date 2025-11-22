@@ -7,14 +7,14 @@ class FAQPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Color(0xFFF5F5F5),
 
       appBar: AppBar(
         backgroundColor: AppColors.primaryBlue,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFFF59E0B)),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
