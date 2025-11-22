@@ -1,7 +1,5 @@
 import 'package:educycle/constants/colors.dart';
 import 'package:flutter/material.dart';
-
-// Pastikan file ini ada di folder widgets
 import '../widgets/profile_info_row.dart'; 
 
 class ProfilePage extends StatelessWidget {
@@ -31,16 +29,13 @@ class ProfilePage extends StatelessWidget {
           automaticallyImplyLeading: false, // Menghilangkan tombol back default
           backgroundColor: AppColors.primaryBlue,
           elevation: 0,
+
           title: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Tombol Kembali
-                InkWell(
-                  onTap: () => Navigator.pop(context),
-                  child: const Icon(Icons.arrow_back_ios, color: Color(0xFFF59E0B), size: 28),
-                ),
+                const SizedBox(width: 28),
                 
                 // Judul "Profile"
                 const Text(
@@ -54,7 +49,7 @@ class ProfilePage extends StatelessWidget {
                 
                 // Tombol Notifikasi
                 InkWell(
-                  onTap: () => Navigator.pushNamed(context, '/notifications'),
+                  onTap: () => Navigator.pushNamed(context, '/notification'),
                   child: const Icon(Icons.notifications_none, color: Color(0xFFF59E0B), size: 28),
                 ),
               ],
@@ -172,7 +167,7 @@ class ProfilePage extends StatelessWidget {
               Navigator.pushReplacementNamed(context, '/home');
             } else if (index == 1) {
               // Navigasi ke Settings (jika ada)
-              // Navigator.pushReplacementNamed(context, '/settings');
+              Navigator.pushReplacementNamed(context, '/settings');
             }
             // Jika index == 2, tetap di halaman ini
           },
