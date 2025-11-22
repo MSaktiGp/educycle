@@ -15,23 +15,30 @@ class HomePage extends StatelessWidget {
       backgroundColor: backgroundColor,
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        backgroundColor: primaryColor,
+        backgroundColor: AppColors.primaryBlue,
+        elevation: 0,
         centerTitle: true,
-        title: Text(
-          'EduCycle',
-          style: TextStyle(
-            color: accentColor,
-            fontWeight: FontWeight.bold,
-            fontSize: 30,
-          ),
+
+        title: const Text(
+            'EduCycle',
+            style: TextStyle(
+                color:Color(0xFFF59E0B),
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
+            ),
         ),
+        
         actions: [
-          IconButton(
-            onPressed: () {},
-            icon: Icon(Icons.notifications, color: accentColor),
+          // Tombol Notifikasi
+          InkWell(
+            onTap: () => Navigator.pushNamed(context, '/notification'),
+            child: const Padding(
+              padding: EdgeInsets.only(right: 16.0),
+              child: Icon(Icons.notifications_none, color: Color(0xFFF59E0B), size: 28),
+            ),
           ),
         ],
-      ),
+      ), 
 
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -170,9 +177,10 @@ class HomePage extends StatelessWidget {
             selectedFontSize: 0,
             unselectedFontSize: 0,
             onTap: (index) {
-              if (index == 0) {
-                Navigator.pushReplacementNamed(context, '/home');
-              } else if (index == 1) {
+              // if (index == 0) {
+              //   Navigator.pushReplacementNamed(context, '/home');
+              // }
+              if (index == 1) {
                 Navigator.pushReplacementNamed(context, '/settings');
               } else if (index == 2) {
                 Navigator.pushReplacementNamed(context, '/profile');

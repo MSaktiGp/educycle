@@ -109,29 +109,31 @@ class SettingsPage extends StatelessWidget {
 
       // APP BAR
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: AppColors.primaryBlue,
         elevation: 0,
         centerTitle: true,
 
-        leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
-        onPressed: () => Navigator.pop(context),
-        ),
-
         title: const Text(
-          "Pengaturan",
-          style: TextStyle(
-            color:Color(0xFFF59E0B),
-            fontWeight: FontWeight.bold,
-          ),
+            'Pengaturan',
+            style: TextStyle(
+                color:Color(0xFFF59E0B),
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
+            ),
         ),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 16),
-            child: Icon(Icons.notifications_none, color:Color(0xFFF59E0B)),
+        
+        actions: [
+          // Tombol Notifikasi
+          InkWell(
+            onTap: () => Navigator.pushNamed(context, '/notification'),
+            child: const Padding(
+              padding: EdgeInsets.only(right: 16.0),
+              child: Icon(Icons.notifications_none, color: Color(0xFFF59E0B), size: 28),
+            ),
           ),
         ],
-      ),
+      ), 
 
       // BODY
       body: Padding(
@@ -222,9 +224,9 @@ class SettingsPage extends StatelessWidget {
             if (index == 0) {
               // Navigasi ke Home
               Navigator.pushReplacementNamed(context, '/home');
-            } else if (index == 1) {
-              // Navigasi ke Profile (jika ada)
-              Navigator.pushReplacementNamed(context, '/profile');
+            // } else if (index == 1) {
+            //   // Navigasi ke Profile (jika ada)
+            //   Navigator.pushReplacementNamed(context, '/settings');
             } else if (index == 2) {
               Navigator.pushReplacementNamed(context, '/profile');
             }
