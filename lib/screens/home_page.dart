@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:educycle/constants/colors.dart';
 
-
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
@@ -9,7 +8,7 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final primaryColor = AppColors.primaryBlue;
     final accentColor = AppColors.secondaryOrange;
-    final backgroundColor = Color(0xFFF5F5F5);
+    final backgroundColor = const Color(0xFFF5F5F5);
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -18,28 +17,27 @@ class HomePage extends StatelessWidget {
         backgroundColor: AppColors.primaryBlue,
         elevation: 0,
         centerTitle: true,
-
         title: const Text(
-            'EduCycle',
-            style: TextStyle(
-                color:Color(0xFFF59E0B),
-                fontWeight: FontWeight.bold,
-                fontSize: 24,
-            ),
+          'EduCycle',
+          style: TextStyle(
+            color: Color(0xFFF59E0B),
+            fontWeight: FontWeight.bold,
+            fontSize: 24,
+          ),
         ),
-        
         actions: [
-          // Tombol Notifikasi
           InkWell(
             onTap: () => Navigator.pushNamed(context, '/notification'),
             child: const Padding(
               padding: EdgeInsets.only(right: 16.0),
-              child: Icon(Icons.notifications_none, color: Color(0xFFF59E0B), size: 28),
+              child: Icon(Icons.notifications_none,
+                  color: Color(0xFFF59E0B), size: 28),
             ),
           ),
         ],
-      ), 
+      ),
 
+      // Body
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -91,7 +89,6 @@ class HomePage extends StatelessWidget {
                         ],
                       ),
                     ),
-
                     const CircleAvatar(
                       radius: 50,
                       backgroundImage: AssetImage('assets/images/MyFoto.jpg'),
@@ -102,7 +99,7 @@ class HomePage extends StatelessWidget {
             ),
 
             const SizedBox(height: 20),
-            
+
             GridView.count(
               crossAxisCount: 3,
               shrinkWrap: true,
@@ -112,35 +109,18 @@ class HomePage extends StatelessWidget {
               childAspectRatio: 0.90,
               children: [
                 _buildMenuButton(
+                  context: context,
                   icon: Icons.inventory_2,
                   label: 'Peminjaman',
                   color: primaryColor,
+                  onTap: () => Navigator.pushNamed(context, '/peminjaman_main'),
                 ),
                 _buildMenuButton(
+                  context: context,
                   icon: Icons.history,
                   label: 'Riwayat',
                   color: primaryColor,
-                ),
-                _buildMenuButton(
-                  icon: Icons.hourglass_empty,
-                  label: 'Akan Datang',
-                  color: Colors.grey.shade300,
-                  iconColor: Colors.black54,
-                  textColor: Colors.black54,
-                ),
-                _buildMenuButton(
-                  icon: Icons.hourglass_empty,
-                  label: 'Akan Datang',
-                  color: Colors.grey.shade300,
-                  iconColor: Colors.black54,
-                  textColor: Colors.black54,
-                ),
-                _buildMenuButton(
-                  icon: Icons.hourglass_empty,
-                  label: 'Akan Datang',
-                  color: Colors.grey.shade300,
-                  iconColor: Colors.black54,
-                  textColor: Colors.black54,
+                  onTap: () => Navigator.pushNamed(context, '/riwayat'),
                 ),
                 _buildMenuButton(
                   icon: Icons.hourglass_empty,
@@ -155,14 +135,12 @@ class HomePage extends StatelessWidget {
         ),
       ),
 
+      // Bottom Navigation Bar
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: primaryColor,
           border: Border(
-            top: BorderSide(
-              color: accentColor,
-              width: 3,
-            ),
+            top: BorderSide(color: accentColor, width: 3),
           ),
         ),
         child: Padding(
@@ -177,9 +155,6 @@ class HomePage extends StatelessWidget {
             selectedFontSize: 0,
             unselectedFontSize: 0,
             onTap: (index) {
-              // if (index == 0) {
-              //   Navigator.pushReplacementNamed(context, '/home');
-              // }
               if (index == 1) {
                 Navigator.pushReplacementNamed(context, '/settings');
               } else if (index == 2) {
@@ -203,35 +178,44 @@ class HomePage extends StatelessWidget {
     required Color color,
     Color iconColor = Colors.white,
     Color textColor = Colors.black,
+    BuildContext? context,
+    VoidCallback? onTap,
   }) {
-    return Column(
-      children: [
-        Container(
-          height: 100,
-          width: 100,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(5),
-            boxShadow: const [
-              BoxShadow(
-                color: Colors.black12,
-                blurRadius: 4,
-                offset: Offset(2, 2),
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(5),
+        child: Column(
+          children: [
+            Container(
+              height: 100,
+              width: 100,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(5),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 4,
+                    offset: Offset(2, 2),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: Icon(icon, color: iconColor, size: 36),
+              child: Icon(icon, color: iconColor, size: 36),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: textColor,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: textColor,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

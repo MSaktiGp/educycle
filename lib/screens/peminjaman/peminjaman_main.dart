@@ -105,7 +105,7 @@ class PeminjamanMain extends StatelessWidget {
           icon: const Icon(Icons.arrow_back_ios_new, 
           color: Color(0xFFF59E0B),
           size: 28),
-          onPressed: () => Navigator.pop(context), 
+          onPressed: () => Navigator.pushNamed(context, '/home'), 
         ),
         
         backgroundColor: primaryColor,
@@ -157,7 +157,7 @@ class PeminjamanMain extends StatelessWidget {
                 
                 _buildMenuButton(
                   context: context,
-                  icon: Icons.home, 
+                  icon: Icons.home_work, 
                   label: 'Ruangan',
                   color: primaryColor, 
                   onTap: () {
