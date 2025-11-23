@@ -101,14 +101,21 @@ class _LaporanMasalahPageState extends State<LaporanMasalahPage> {
           style: TextStyle(
             color: Color(0xFFF59E0B),
             fontWeight: FontWeight.bold,
+            fontSize: 24,
           ),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined, color: Color(0xFFF59E0B)),
-            onPressed: () {},
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: IconButton(
+              icon: const Icon(Icons.notifications_none,color: Color(0xFFF59E0B),
+              size: 28,
+              ),
+              onPressed: () => Navigator.pushNamed(context, '/notification'),
+            ),
           ),
         ],
+
       ),
 
       body: Padding(

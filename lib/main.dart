@@ -9,6 +9,7 @@ import 'package:educycle/screens/settings/language_page.dart';
 import 'package:educycle/screens/settings/faq_page.dart';
 import 'package:educycle/screens/settings/laporan_masalah_page.dart';
 import 'package:educycle/screens/peminjaman/peminjaman_main.dart';
+import 'package:educycle/screens/peminjaman/peminjaman_barang_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -28,6 +29,7 @@ class MyApp extends StatelessWidget {
         '/': (context) => const LoginPage(),
         '/home': (context) => const HomePage(),
         '/peminjaman_main': (context) => const PeminjamanMain(),
+        '/peminjaman_barang': (context) => const PeminjamanBarangPage(),
         '/profile': (context) => const ProfilePage(),
         '/notification': (context) => const NotificationPage(),
         '/settings': (context) => const SettingsPage(),

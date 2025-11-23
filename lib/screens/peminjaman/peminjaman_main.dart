@@ -152,6 +152,7 @@ class PeminjamanMain extends StatelessWidget {
                   label: 'Barang',
                   color: primaryColor, 
                   onTap: () {
+                    Navigator.pushNamed(context, '/peminjaman_barang');
                   },
                 ),
                 
@@ -161,7 +162,7 @@ class PeminjamanMain extends StatelessWidget {
                   label: 'Ruangan',
                   color: primaryColor, 
                   onTap: () {
-                    
+                   // Navigator.pushNamed(context, '/peminjaman_ruangan');
                   },
                 ),
                 
