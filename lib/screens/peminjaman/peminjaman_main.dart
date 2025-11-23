@@ -160,9 +160,7 @@ class PeminjamanMain extends StatelessWidget {
                   icon: Icons.home_work, 
                   label: 'Ruangan',
                   color: primaryColor, 
-                  onTap: () {
-                    
-                  },
+                  onTap: () => Navigator.pushNamed(context, '/peminjaman_ruangan'),
                 ),
                 
                 _buildMenuButton(
