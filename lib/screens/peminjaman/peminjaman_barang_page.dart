@@ -194,18 +194,18 @@ class PeminjamanBarangPage extends StatelessWidget {
               ),
               
               // Barcode icon di sebelah kanan
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Icon(
-                  Icons.qr_code_2,
-                  color: Color(0xFF1E3A8A),
-                  size: 32,
-                ),
-              ),
+             // Container(
+               // padding: const EdgeInsets.all(6),
+                //decoration: BoxDecoration(
+                  //color: Colors.white,
+                  //borderRadius: BorderRadius.circular(6),
+                //),
+               // child: const Icon(
+                 // Icons.qr_code_2,
+                 // color: Color(0xFF1E3A8A),
+                 // size: 32,
+                //),
+              //),
             ],
           ),
 
