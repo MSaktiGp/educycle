@@ -152,6 +152,7 @@ class PeminjamanMain extends StatelessWidget {
                   label: 'Barang',
                   color: primaryColor, 
                   onTap: () {
+                    Navigator.pushNamed(context, '/peminjaman_barang');
                   },
                 ),
                 
@@ -160,7 +161,9 @@ class PeminjamanMain extends StatelessWidget {
                   icon: Icons.home_work, 
                   label: 'Ruangan',
                   color: primaryColor, 
-                  onTap: () => Navigator.pushNamed(context, '/peminjaman_ruangan'),
+                  onTap: () {
+                    Navigator.pushNamed(context, '/peminjaman_ruangan');
+                  },
                 ),
                 
                 _buildMenuButton(
