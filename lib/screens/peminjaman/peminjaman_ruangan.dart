@@ -254,11 +254,19 @@ class _PeminjamanRuanganState extends State<PeminjamanRuangan> {
                   setState(() {
                     _selectedRoomId = roomId;
                   });
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                        content: Text('Mengajukan peminjaman untuk $roomName')),
+                  
+                  Navigator.pushNamed(
+                    context, '/detail_peminjaman_ruangan',
+                    arguments: {
+                      'roomId': roomId,
+                      'roomName': roomName,
+                      'capacity': capacity,
+                      'selectedDate': _selectedDate != null ? _formatDate(_selectedDate!) : null,
+                      'selectedBuilding': _selectedBuilding,
+                    },
                   );
                 },
+
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFF59E0B),
                   shape: RoundedRectangleBorder(

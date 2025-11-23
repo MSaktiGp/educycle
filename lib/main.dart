@@ -10,7 +10,9 @@ import 'package:educycle/screens/settings/faq_page.dart';
 import 'package:educycle/screens/settings/laporan_masalah_page.dart';
 import 'package:educycle/screens/peminjaman/peminjaman_main.dart';
 import 'package:educycle/screens/peminjaman/peminjaman_ruangan.dart';
+import 'package:educycle/screens/peminjaman/detail_peminjaman_ruangan.dart';
 import 'package:educycle/screens/peminjaman/peminjaman_barang_page.dart';
+
 
 void main() {
   runApp(const MyApp());
@@ -25,12 +27,13 @@ class MyApp extends StatelessWidget {
       title: 'EduCycle',
       theme: ThemeData(primaryColor: AppColors.primaryBlue, useMaterial3: true),
       debugShowCheckedModeBanner: false,
-      initialRoute: '/peminjaman_main',
+      initialRoute: '/detail_peminjaman_ruangan',
       routes: {
         '/': (context) => const LoginPage(),
         '/home': (context) => const HomePage(),
         '/peminjaman_main': (context) => const PeminjamanMain(),
         '/peminjaman_ruangan': (context) => const PeminjamanRuangan(),
+        '/detail_peminjaman_ruangan': (context) => const DetailPeminjamanRuangan(),
         '/peminjaman_barang': (context) => const PeminjamanBarangPage(),
         '/profile': (context) => const ProfilePage(),
         '/notification': (context) => const NotificationPage(),
