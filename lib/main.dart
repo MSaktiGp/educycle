@@ -8,6 +8,7 @@ import 'package:educycle/screens/settings/setting_page.dart';
 import 'package:educycle/screens/settings/language_page.dart';
 import 'package:educycle/screens/settings/faq_page.dart';
 import 'package:educycle/screens/settings/laporan_masalah_page.dart';
+import 'package:educycle/screens/peminjaman/peminjaman_main.dart';
 
 void main() {
   runApp(const MyApp());
@@ -22,10 +23,11 @@ class MyApp extends StatelessWidget {
       title: 'EduCycle',
       theme: ThemeData(primaryColor: AppColors.primaryBlue, useMaterial3: true),
       debugShowCheckedModeBanner: false,
-      initialRoute: '/',
+      initialRoute: '/peminjaman_main',
       routes: {
         '/': (context) => const LoginPage(),
         '/home': (context) => const HomePage(),
+        '/peminjaman_main': (context) => const PeminjamanMain(),
         '/profile': (context) => const ProfilePage(),
         '/notification': (context) => const NotificationPage(),
         '/settings': (context) => const SettingsPage(),
