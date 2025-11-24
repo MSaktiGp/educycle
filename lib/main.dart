@@ -27,7 +27,7 @@ class MyApp extends StatelessWidget {
       title: 'EduCycle',
       theme: ThemeData(primaryColor: AppColors.primaryBlue, useMaterial3: true),
       debugShowCheckedModeBanner: false,
-      initialRoute: '/detail_peminjaman_ruangan',
+      initialRoute: '/',
       routes: {
         '/': (context) => const LoginPage(),
         '/home': (context) => const HomePage(),

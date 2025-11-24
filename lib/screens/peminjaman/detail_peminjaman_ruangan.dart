@@ -280,6 +280,7 @@ class _DetailPeminjamanRuanganState extends State<DetailPeminjamanRuangan> {
           iconSize: 40, 
           currentIndex: activeIndex,
           type: BottomNavigationBarType.fixed,
+          selectedFontSize: 0,
           unselectedFontSize: 0,
           onTap: (index) {
             if (index == activeIndex) {
