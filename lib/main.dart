@@ -12,6 +12,8 @@ import 'package:educycle/screens/peminjaman/peminjaman_main.dart';
 import 'package:educycle/screens/peminjaman/peminjaman_ruangan.dart';
 import 'package:educycle/screens/peminjaman/detail_peminjaman_ruangan.dart';
 import 'package:educycle/screens/peminjaman/peminjaman_barang_page.dart';
+import 'package:educycle/screens/peminjaman/detail_peminjaman_barang_page.dart';
+import 'package:educycle/screens/peminjaman/status_peminjaman_page.dart';
 
 
 void main() {
@@ -35,6 +37,8 @@ class MyApp extends StatelessWidget {
         '/peminjaman_ruangan': (context) => const PeminjamanRuangan(),
         '/detail_peminjaman_ruangan': (context) => const DetailPeminjamanRuangan(),
         '/peminjaman_barang': (context) => const PeminjamanBarangPage(),
+        '/detail_peminjaman_barang': (context) => const DetailPeminjamanBarangPage(),
+        '/status_peminjaman': (context) => const StatusPeminjamanPage(),
         '/profile': (context) => const ProfilePage(),
         '/notification': (context) => const NotificationPage(),
         '/settings': (context) => const SettingsPage(),

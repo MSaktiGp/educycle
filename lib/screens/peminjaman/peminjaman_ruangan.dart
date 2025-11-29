@@ -11,7 +11,6 @@ class PeminjamanRuangan extends StatefulWidget {
 class _PeminjamanRuanganState extends State<PeminjamanRuangan> {
   String? _selectedBuilding;
   DateTime? _selectedDate;
-  String? _selectedRoomId;
 
   final GlobalKey _buildingDropdownKey = GlobalKey();
   OverlayEntry? _buildingOverlayEntry;
@@ -177,7 +176,7 @@ class _PeminjamanRuanganState extends State<PeminjamanRuangan> {
           border: Border.all(color: Colors.grey.shade400, width: 1),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               spreadRadius: 1,
               blurRadius: 3,
               offset: const Offset(0, 2),
@@ -250,11 +249,7 @@ class _PeminjamanRuanganState extends State<PeminjamanRuangan> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    _selectedRoomId = roomId;
-                  });
-                  
+                onPressed: () {                  
                   Navigator.pushNamed(
                     context, '/detail_peminjaman_ruangan',
                     arguments: {
@@ -424,7 +419,6 @@ class _PeminjamanRuanganState extends State<PeminjamanRuangan> {
                           room['capacity'] as int,
                           room['id'] as String,
                         ))
-                    .toList(),
             ],
           ),
         ),
