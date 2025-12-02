@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:educycle/constants/colors.dart';
+import 'package:educycle/widgets/navbar.dart'; // Import layout navbar
 
 class DetailPeminjamanBarangArguments {
   final String itemName;

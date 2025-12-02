@@ -1,6 +1,7 @@
 import 'package:educycle/constants/colors.dart';
 import 'package:flutter/material.dart';
 import '../widgets/profile_info_row.dart'; 
+import 'package:educycle/widgets/navbar.dart'; 
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -114,42 +115,7 @@ class ProfilePage extends StatelessWidget {
           ],
         ),
       ),
-
-      // 3. Bottom Navigation Bar (Warna Biru)
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: AppColors.primaryBlue,
-          border: Border(
-            top: BorderSide(
-              color: Color(0xFFF59E0B),
-              width: 3,
-            ),
-          ),
-        ),
-        child: BottomNavigationBar(
-          backgroundColor: AppColors.primaryBlue,
-          selectedItemColor: Color(0xFFF59E0B), 
-          unselectedItemColor: Color(0xFFF5F5F5),
-          iconSize: 35,
-          
-          currentIndex: 2, 
-          type: BottomNavigationBarType.fixed,
-          selectedFontSize: 0,
-          unselectedFontSize: 0,
-          onTap: (index) {
-            if (index == 0) {
-              Navigator.pushReplacementNamed(context, '/home');
-            } else if (index == 1) {
-              Navigator.pushReplacementNamed(context, '/settings');
-            }
-          },
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
-            BottomNavigationBarItem(icon: Icon(Icons.settings), label: ''),
-            BottomNavigationBarItem(icon: Icon(Icons.person), label: ''),
-          ],
-        ),
-      ),
+       bottomNavigationBar: CustomBottomNav(currentIndex: 2),
     );
   }
 }

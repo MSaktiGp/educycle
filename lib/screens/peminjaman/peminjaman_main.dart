@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:educycle/constants/colors.dart';
+import 'package:educycle/widgets/navbar.dart'; // Import layout navbar
 
 class PeminjamanMain extends StatelessWidget {
   const PeminjamanMain({super.key});
@@ -47,52 +48,7 @@ class PeminjamanMain extends StatelessWidget {
       ],
     );
   }
-
-  Widget _buildBottomNavigationBar(BuildContext context, Color primaryColor, Color accentColor) {
-    const activeIndex = 0;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: primaryColor,
-        border: Border(
-          top: BorderSide(
-            color: accentColor,
-            width: 3,
-          ),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.only(top: 6),
-        child: BottomNavigationBar(
-          backgroundColor: primaryColor,
-          selectedItemColor: accentColor,
-          unselectedItemColor: Colors.white,
-          iconSize: 40,
-          currentIndex: activeIndex, 
-          type: BottomNavigationBarType.fixed,
-          selectedFontSize: 0,
-          unselectedFontSize: 0,
-          onTap: (index) {
-            if (index == activeIndex) {
-              return;
-            } else if (index == 1) {
-              Navigator.pushReplacementNamed(context, '/settings');
-            } else if (index == 2) {
-              Navigator.pushReplacementNamed(context, '/profile');
-            }
-          },
-          
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
-            BottomNavigationBarItem(icon: Icon(Icons.settings), label: ''),
-            BottomNavigationBarItem(icon: Icon(Icons.person), label: ''),
-          ],
-        ),
-      ),
-    );
-  }
-
-
+  
   @override
   Widget build(BuildContext context) {
     final primaryColor = AppColors.primaryBlue;
@@ -207,7 +163,7 @@ class PeminjamanMain extends StatelessWidget {
         ),
       ),
 
-      bottomNavigationBar: _buildBottomNavigationBar(context, primaryColor, accentColor),
+      bottomNavigationBar: CustomBottomNav(currentIndex: 0),
     );
   }
 }

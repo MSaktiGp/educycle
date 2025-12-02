@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:educycle/constants/colors.dart';
+import 'package:educycle/constants/colors.dart'; 
 
 class LaporanMasalahPage extends StatefulWidget {
   const LaporanMasalahPage({super.key});

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:educycle/constants/colors.dart';
+import 'package:educycle/widgets/navbar.dart'; // Import layout navbar
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -12,6 +13,8 @@ class HomePage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: backgroundColor,
+
+      // AppBar
       appBar: AppBar(
         automaticallyImplyLeading: false,
         backgroundColor: AppColors.primaryBlue,
@@ -30,8 +33,11 @@ class HomePage extends StatelessWidget {
             onTap: () => Navigator.pushNamed(context, '/notification'),
             child: const Padding(
               padding: EdgeInsets.only(right: 16.0),
-              child: Icon(Icons.notifications_none,
-                  color: Color(0xFFF59E0B), size: 28),
+              child: Icon(
+                Icons.notifications_none,
+                color: Color(0xFFF59E0B),
+                size: 28,
+              ),
             ),
           ),
         ],
@@ -49,15 +55,14 @@ class HomePage extends StatelessWidget {
             ),
 
             const SizedBox(height: 10),
+
+            // Card Profil
             Card(
               elevation: 5,
               shadowColor: primaryColor.withOpacity(0.3),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
-                side: BorderSide(
-                  color: primaryColor,
-                  width: 1.5,
-                ),
+                side: BorderSide(color: primaryColor, width: 1.5),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -100,6 +105,7 @@ class HomePage extends StatelessWidget {
 
             const SizedBox(height: 20),
 
+            // Menu Grid
             GridView.count(
               crossAxisCount: 3,
               shrinkWrap: true,
@@ -135,43 +141,11 @@ class HomePage extends StatelessWidget {
         ),
       ),
 
-      // Bottom Navigation Bar
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: primaryColor,
-          border: Border(
-            top: BorderSide(color: accentColor, width: 3),
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.only(top: 6),
-          child: BottomNavigationBar(
-            backgroundColor: primaryColor,
-            selectedItemColor: accentColor,
-            unselectedItemColor: Colors.white,
-            iconSize: 40,
-            currentIndex: 0,
-            type: BottomNavigationBarType.fixed,
-            selectedFontSize: 0,
-            unselectedFontSize: 0,
-            onTap: (index) {
-              if (index == 1) {
-                Navigator.pushReplacementNamed(context, '/settings');
-              } else if (index == 2) {
-                Navigator.pushReplacementNamed(context, '/profile');
-              }
-            },
-            items: const [
-              BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
-              BottomNavigationBarItem(icon: Icon(Icons.settings), label: ''),
-              BottomNavigationBarItem(icon: Icon(Icons.person), label: ''),
-            ],
-          ),
-        ),
-      ),
+      bottomNavigationBar: CustomBottomNav(currentIndex: 0),
     );
   }
 
+  // Menu Button Widget
   Widget _buildMenuButton({
     required IconData icon,
     required String label,
@@ -208,10 +182,7 @@ class HomePage extends StatelessWidget {
             Text(
               label,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: textColor,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(color: textColor, fontWeight: FontWeight.w600),
             ),
           ],
         ),
