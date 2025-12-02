@@ -19,8 +19,11 @@ class _PeminjamanRuanganState extends State<PeminjamanRuangan> {
   final List<Map<String, dynamic>> availableRooms = [
     {'name': 'Ruang 08 Lantai 2 Gedung FST B', 'capacity': 30, 'id': 'B208-1'},
     {'name': 'Ruang 09 Lantai 2 Gedung FST B', 'capacity': 25, 'id': 'B209-2'},
-    {'name': 'Ruang 01 Lantai 3 Gedung FST B', 'capacity': 50, 'id': 'A301-3'},
-    {'name': 'Ruang 02 Lantai 3 Gedung FST B', 'capacity': 40, 'id': 'A302-4'},
+    {'name': 'Ruang 01 Lantai 3 Gedung FST B', 'capacity': 50, 'id': 'B301-3'},
+    {'name': 'Ruang 02 Lantai 3 Gedung FST B', 'capacity': 40, 'id': 'B302-4'},
+    {'name': 'Ruang Lab ICT 1 Gedung FST A', 'capacity': 40, 'id': 'A_ICT1-5'},
+    {'name': 'Ruang Lab ICT 2 Gedung FST A', 'capacity': 40, 'id': 'A_ICT2-6'},
+    {'name': 'Ruang Lab Komputasi Sains Gedung FST A', 'capacity': 40, 'id': 'A_KS-7'},
   ];
 
   String _getDayName(int weekday) {

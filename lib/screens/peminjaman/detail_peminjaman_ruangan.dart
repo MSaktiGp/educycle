@@ -43,7 +43,7 @@ class _DetailPeminjamanRuanganState extends State<DetailPeminjamanRuangan> {
       final rawArgs =
           ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
 
-      // Asumsi format data yang masuk konsisten
+      
       _data = DetailPeminjamanRuanganArguments(
         roomName: rawArgs['roomName'] as String,
         roomId: rawArgs['roomId'] as String,
@@ -52,7 +52,6 @@ class _DetailPeminjamanRuanganState extends State<DetailPeminjamanRuangan> {
         selectedBuilding: rawArgs['selectedBuilding'] as String?,
       );
     } else {
-      // Data default untuk testing
       _data = DetailPeminjamanRuanganArguments(
         roomName: 'Ruang Serbaguna A201',
         roomId: 'A201',
@@ -139,7 +138,6 @@ class _DetailPeminjamanRuanganState extends State<DetailPeminjamanRuangan> {
     );
   }
 
-  // >>> FUNGSI _submitPeminjaman YANG SUDAH DISESUAIKAN <<<
   void _submitPeminjaman() {
     if (_selectedStartTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -160,7 +158,6 @@ class _DetailPeminjamanRuanganState extends State<DetailPeminjamanRuangan> {
     final additionalItems =
         _selectedItems.isEmpty ? 'Tidak ada' : _selectedItems.join(', ');
 
-    // Tampilkan dialog notifikasi sukses (mengambil logika dari DetailPeminjamanBarangPage)
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -217,15 +214,13 @@ class _DetailPeminjamanRuanganState extends State<DetailPeminjamanRuangan> {
                       elevation: 0,
                     ),
                     onPressed: () {
-                      Navigator.pop(dialogContext); // Tutup dialog
-
-                      // Navigate ke status peminjaman dengan data ruangan
+                      Navigator.pop(dialogContext);
                       Navigator.pushNamed(
                         context,
                         '/status_peminjaman',
                         arguments: {
-                          'type': 'ruangan', // Jenis peminjaman
-                          'roomName': _data.roomName,
+                          'type': 'ruangan',
+                          'roomName': roomDisplay,
                           'roomId': _data.roomId,
                           'building': _data.selectedBuilding,
                           'date': _data.selectedDateString,
@@ -253,7 +248,6 @@ class _DetailPeminjamanRuanganState extends State<DetailPeminjamanRuangan> {
       },
     );
   }
-  // >>> AKHIR DARI FUNGSI _submitPeminjaman YANG SUDAH DISESUAIKAN <<<
 
   Widget _buildReadonlyField(String label, String value) {
     return Column(

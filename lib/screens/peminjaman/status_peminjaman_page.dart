@@ -103,7 +103,7 @@ class StatusPeminjamanPage extends StatelessWidget {
 
                 // User Info
                 Text(
-                  'M. Sakti Guruh Pratama',
+                  'Juliyando Akbar',
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
