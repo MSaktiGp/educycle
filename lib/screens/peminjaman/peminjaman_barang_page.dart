@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:educycle/constants/colors.dart';
+import 'package:educycle/widgets/navbar.dart'; // Import layout navbar
 
 class PeminjamanBarangPage extends StatefulWidget {
   const PeminjamanBarangPage({super.key});
@@ -117,50 +118,7 @@ class _PeminjamanBarangPageState extends State<PeminjamanBarangPage> {
 
     Overlay.of(context).insert(_buildingOverlayEntry!);
   }
-
-  Widget _buildBottomNavigationBar(
-      BuildContext context, Color primaryColor, Color accentColor) {
-    const activeIndex = 0;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: primaryColor,
-        border: Border(
-          top: BorderSide(
-            color: accentColor,
-            width: 3,
-          ),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.only(top: 6),
-        child: BottomNavigationBar(
-          backgroundColor: primaryColor,
-          selectedItemColor: accentColor,
-          unselectedItemColor: Colors.white,
-          iconSize: 40,
-          currentIndex: activeIndex,
-          type: BottomNavigationBarType.fixed,
-          selectedFontSize: 0,
-          unselectedFontSize: 0,
-          onTap: (index) {
-            if (index == activeIndex) {
-              return;
-            } else if (index == 1) {
-              Navigator.pushReplacementNamed(context, '/settings');
-            } else if (index == 2) {
-              Navigator.pushReplacementNamed(context, '/profile');
-            }
-          },
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
-            BottomNavigationBarItem(icon: Icon(Icons.settings), label: ''),
-            BottomNavigationBarItem(icon: Icon(Icons.person), label: ''),
-          ],
-        ),
-      ),
-    );
-  }
+  
 
   Widget _buildDropdownField(
       String label, String hintText, {VoidCallback? onTap, GlobalKey? key}) {
@@ -418,8 +376,7 @@ class _PeminjamanBarangPageState extends State<PeminjamanBarangPage> {
         ),
       ),
 
-      bottomNavigationBar:
-          _buildBottomNavigationBar(context, primaryColor, accentColor),
+     bottomNavigationBar: CustomBottomNav(currentIndex: 0),
     );
   }
 }

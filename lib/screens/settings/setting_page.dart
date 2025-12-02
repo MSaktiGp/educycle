@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:educycle/constants/colors.dart';
+import 'package:educycle/widgets/navbar.dart'; // Import layout navbar
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -198,47 +199,7 @@ class SettingsPage extends StatelessWidget {
       ),
 
       // BOTTOM NAVIGATION BAR
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: AppColors.primaryBlue,
-          // Border atas oranye sesuai BottomNavBar di HomePage
-          border: Border(
-            top: BorderSide(
-              color: Color(0xFFF59E0B),
-              width: 3,
-            ),
-          ),
-        ),
-        child: BottomNavigationBar(
-          backgroundColor: AppColors.primaryBlue,
-          selectedItemColor: Color(0xFFF59E0B), // Ikon 'settings' aktif
-          unselectedItemColor: Colors.white,
-          iconSize: 35,
-          // index 1 adalah halaman settings
-          currentIndex: 1, 
-          type: BottomNavigationBarType.fixed,
-          selectedFontSize: 0,
-          unselectedFontSize: 0,
-          onTap: (index) {
-            // Logika navigasi BottomBar
-            if (index == 0) {
-              // Navigasi ke Home
-              Navigator.pushReplacementNamed(context, '/home');
-            // } else if (index == 1) {
-            //   // Navigasi ke Profile (jika ada)
-            //   Navigator.pushReplacementNamed(context, '/settings');
-            } else if (index == 2) {
-              Navigator.pushReplacementNamed(context, '/profile');
-            }
-            // Jika index == 1, tetap di halaman ini
-          },
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
-            BottomNavigationBarItem(icon: Icon(Icons.settings), label: ''),
-            BottomNavigationBarItem(icon: Icon(Icons.person), label: ''),
-          ],
-        ),
-      ),
+      bottomNavigationBar: const CustomBottomNav(currentIndex: 1),
     );
   }
 
