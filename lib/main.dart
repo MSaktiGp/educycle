@@ -14,7 +14,7 @@ import 'package:educycle/screens/peminjaman/detail_peminjaman_ruangan.dart';
 import 'package:educycle/screens/peminjaman/peminjaman_barang_page.dart';
 import 'package:educycle/screens/peminjaman/detail_peminjaman_barang_page.dart';
 import 'package:educycle/screens/peminjaman/status_peminjaman_page.dart';
-
+import 'package:educycle/screens/riwayat.dart';
 
 void main() {
   runApp(const MyApp());
@@ -29,7 +29,7 @@ class MyApp extends StatelessWidget {
       title: 'EduCycle',
       theme: ThemeData(primaryColor: AppColors.primaryBlue, useMaterial3: true),
       debugShowCheckedModeBanner: false,
-      initialRoute: '/',
+      initialRoute: '/detail_peminjaman_ruangan',
       routes: {
         '/': (context) => const LoginPage(),
         '/home': (context) => const HomePage(),
@@ -39,6 +39,7 @@ class MyApp extends StatelessWidget {
         '/peminjaman_barang': (context) => const PeminjamanBarangPage(),
         '/detail_peminjaman_barang': (context) => const DetailPeminjamanBarangPage(),
         '/status_peminjaman': (context) => const StatusPeminjamanPage(),
+        '/riwayat':(context) => const RiwayatPage(),
         '/profile': (context) => const ProfilePage(),
         '/notification': (context) => const NotificationPage(),
         '/settings': (context) => const SettingsPage(),
