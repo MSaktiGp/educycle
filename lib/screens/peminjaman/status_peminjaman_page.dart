@@ -1,18 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:educycle/constants/colors.dart';
-import 'package:educycle/widgets/navbar.dart'; // Import layout navbar  
+import 'package:educycle/widgets/navbar.dart';
+import '../../models/user_model.dart';
 
 class StatusPeminjamanPage extends StatelessWidget {
-  const StatusPeminjamanPage({super.key});
+  final UserModel user;
+  const StatusPeminjamanPage({super.key, required this.user});
 
   @override
   Widget build(BuildContext context) {
+    // 1. Ambil Data Peminjaman dari Arguments (Sudah Benar)
     final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    
-    final itemCode = args?['itemCode'] ?? '';
+    String titleDisplay = '';
+    if (args?['type'] == 'barang') {
+      titleDisplay = args?['itemName'] ?? 'Barang';
+    } else {
+      titleDisplay = args?['roomName'] ?? 'Ruangan';
+    }
     final date = args?['date'] ?? '';
     final time = args?['time'] ?? '';
     final status = args?['status'] ?? 'Menunggu Persetujuan';
+
+    // 2. Siapkan Data User (INI YANG BARU)
+    final String displayName = user.fullName.isNotEmpty ? user.fullName : 'Tanpa Nama';
+    // Logika NIM: Ambil teks sebelum '@' dari email dan jadikan huruf besar
+    final String displayNim = user.email.contains('@') 
+        ? user.email.split('@')[0].toUpperCase() 
+        : user.email;
+    final String displayPhone = user.phoneNumber ?? '-';
 
     final primaryColor = AppColors.primaryBlue;
     const accentColor = Color(0xFFF59E0B);
@@ -23,7 +38,8 @@ class StatusPeminjamanPage extends StatelessWidget {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, color: accentColor, size: 28),
           onPressed: () {
-            Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+            // Kembali ke Home (bersihkan tumpukan halaman)
+            Navigator.of(context).popUntil((route) => route.isFirst);
           },
         ),
         backgroundColor: primaryColor,
@@ -31,21 +47,8 @@ class StatusPeminjamanPage extends StatelessWidget {
         centerTitle: true,
         title: const Text(
           'Keterangan',
-          style: TextStyle(
-            color: accentColor,
-            fontWeight: FontWeight.bold,
-            fontSize: 24,
-          ),
+          style: TextStyle(color: accentColor, fontWeight: FontWeight.bold, fontSize: 24),
         ),
-        actions: [
-          InkWell(
-            onTap: () => Navigator.pushNamed(context, '/notification'),
-            child: const Padding(
-              padding: EdgeInsets.only(right: 16.0),
-              child: Icon(Icons.notifications_none, color: accentColor, size: 28),
-            ),
-          ),
-        ],
       ),
       body: Center(
         child: SingleChildScrollView(
@@ -55,28 +58,22 @@ class StatusPeminjamanPage extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: primaryColor,
-                width: 3,
-              ),
+              border: Border.all(color: primaryColor, width: 3),
             ),
             padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Header: Item Code
+                // Header: Kode Barang/Ruangan
                 Text(
-                  itemCode,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: primaryColor,
-                  ),
+                  titleDisplay,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: primaryColor),
                 ),
 
                 const SizedBox(height: 20),
 
-                // Detail Rows
+                // Detail Data Peminjaman
                 _buildDetailRow('Hari, Tanggal:', date, primaryColor),
                 const SizedBox(height: 12),
                 _buildDetailRow('Waktu:', time, primaryColor),
@@ -84,55 +81,52 @@ class StatusPeminjamanPage extends StatelessWidget {
                 _buildDetailRow('Status:', status, primaryColor),
 
                 const SizedBox(height: 24),
+                const Divider(), // Garis pemisah
+                const SizedBox(height: 16),
 
-                // Profile Section
+                // Profile Section (DATA DINAMIS)
                 Container(
                   width: 90,
                   height: 90,
                   decoration: BoxDecoration(
                     color: Colors.grey.shade200,
                     shape: BoxShape.circle,
+                    image: (user.photoUrl != null && user.photoUrl!.isNotEmpty)
+                        ? DecorationImage(
+                            image: NetworkImage(user.photoUrl!),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
                   ),
-                  child: Icon(
-                    Icons.person,
-                    size: 50,
-                    color: Colors.grey.shade400,
-                  ),
+                  child: (user.photoUrl == null || user.photoUrl!.isEmpty)
+                      ? Icon(Icons.person, size: 50, color: Colors.grey.shade400)
+                      : null,
                 ),
 
                 const SizedBox(height: 16),
 
-                // User Info
+                // User Info (TIDAK HARDCODE LAGI)
                 Text(
-                  'Juliyando Akbar',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: primaryColor,
-                  ),
+                  displayName,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: primaryColor),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'F1E122002',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey.shade700,
-                  ),
+                  displayNim, // NIM Otomatis
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '08123456789',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey.shade700,
-                  ),
+                  displayPhone, // No HP Otomatis
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
                 ),
               ],
             ),
           ),
         ),
       ),
-      bottomNavigationBar: CustomBottomNav(currentIndex: 0),
+      bottomNavigationBar: CustomBottomNav(currentIndex: 0, user: user),
     );
   }
 
@@ -144,25 +138,16 @@ class StatusPeminjamanPage extends StatelessWidget {
           width: 110,
           child: Text(
             label,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: primaryColor,
-            ),
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: primaryColor),
           ),
         ),
         Expanded(
           child: Text(
             value,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Color(0xFF333333),
-              fontWeight: FontWeight.w400,
-            ),
+            style: const TextStyle(fontSize: 14, color: Color(0xFF333333), fontWeight: FontWeight.w400),
           ),
         ),
       ],
     );
   }
-  
 }

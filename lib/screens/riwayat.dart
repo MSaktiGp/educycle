@@ -1,31 +1,30 @@
-import 'package:educycle/screens/detail_riwayat.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:educycle/models/user_model.dart';
+import 'package:educycle/screens/detail_riwayat.dart'; 
 
 class RiwayatPage extends StatefulWidget {
-  const RiwayatPage({super.key});
+  final UserModel user;
+  const RiwayatPage({super.key, required this.user});
 
   @override
   State<RiwayatPage> createState() => _RiwayatPageState();
 }
 
 class _RiwayatPageState extends State<RiwayatPage> {
-  bool showRuangan = true;
+  bool showRuangan = true; // Toggle: True = Ruangan, False = Barang
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[200],
-
-      // ================= APPBAR =================
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
         backgroundColor: const Color(0xFF063DA7),
         elevation: 0,
-
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Color(0xFFF59E0B)),
           onPressed: () => Navigator.pop(context),
         ),
-
         title: const Text(
           "Riwayat",
           style: TextStyle(
@@ -34,62 +33,113 @@ class _RiwayatPageState extends State<RiwayatPage> {
           ),
         ),
         centerTitle: true,
-        toolbarHeight: 75,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications, color: Color(0xFFF59E0B)),
-            onPressed: () {},
+      ),
+      body: Column(
+        children: [
+          // 1. TAB SWITCHER (Ruangan / Barang)
+          _buildTopTabBar(),
+          
+          // 2. LIST DATA (Realtime dari Firebase)
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: _getRiwayatStream(),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Center(child: Text("Error: ${snapshot.error}"));
+                }
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final data = snapshot.data?.docs ?? [];
+
+                if (data.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.history, size: 60, color: Colors.grey[400]),
+                        const SizedBox(height: 10),
+                        Text(
+                          "Belum ada riwayat ${showRuangan ? 'ruangan' : 'barang'}",
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.all(12),
+                  itemCount: data.length,
+                  itemBuilder: (context, index) {
+                    final doc = data[index];
+                    final item = doc.data() as Map<String, dynamic>;
+                    
+                    return _buildHistoryCard(item);
+                  },
+                );
+              },
+            ),
           ),
         ],
       ),
-
-      // ================= BODY =================
-      body: Column(
-        children: [
-          topTabBar(),
-          Expanded(child: showRuangan ? ruanganList() : barangList()),
-        ],
-      ),
     );
   }
 
-  // ================= TAB RUANGAN/BARANG =================
-  Widget topTabBar() {
+  // --- LOGIKA FILTER DATA ---
+  Stream<QuerySnapshot> _getRiwayatStream() {
+    Query query = FirebaseFirestore.instance.collection('peminjaman');
+
+    // Filter Tipe (Ruangan vs Barang)
+    String typeFilter = showRuangan ? 'ruangan' : 'barang';
+    query = query.where('type', isEqualTo: typeFilter);
+
+    // Filter Hak Akses (Privasi)
+    // Jika BUKAN staf (Mahasiswa), hanya lihat punya sendiri.
+    if (!widget.user.isStaff) {
+      query = query.where('userId', isEqualTo: widget.user.uid);
+    }
+    // Staf/Admin melihat semuanya (tidak difilter userId)
+
+    // Urutkan Terbaru
+    query = query.orderBy('createdAt', descending: true);
+
+    return query.snapshots();
+  }
+
+  // --- UI WIDGETS ---
+
+  Widget _buildTopTabBar() {
     return Container(
       height: 55.0,
       color: const Color(0xFF063DA7),
-      // padding: const EdgeInsets.all(1),
       child: Row(
         children: [
-          tabButton("Ruangan", showRuangan, () {
-            setState(() => showRuangan = true);
-          }),
-          // const SizedBox(width: 1),
-          tabButton("Barang", !showRuangan, () {
-            setState(() => showRuangan = false);
-          }),
+          _tabButton("Ruangan", showRuangan, () => setState(() => showRuangan = true)),
+          _tabButton("Barang", !showRuangan, () => setState(() => showRuangan = false)),
         ],
       ),
     );
   }
 
-  Widget tabButton(String label, bool active, VoidCallback onTap) {
+  Widget _tabButton(String label, bool active, VoidCallback onTap) {
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: active ? Color(0xFFF59E0B) : Color(0xFFF4C981),
-            // borderRadius: BorderRadius.circular(2),
+            color: active ? const Color(0xFFF59E0B) : const Color(0xFFF4C981),
+            border: active ? const Border(bottom: BorderSide(color: Colors.white, width: 3)) : null,
           ),
           alignment: Alignment.center,
           child: Text(
             label,
             style: TextStyle(
               fontWeight: FontWeight.bold,
-              fontSize: 17,
-              color: active ? Colors.white : Colors.white,
+              fontSize: 16,
+              color: active ? Colors.white : Colors.white.withOpacity(0.8),
             ),
           ),
         ),
@@ -97,227 +147,104 @@ class _RiwayatPageState extends State<RiwayatPage> {
     );
   }
 
-  // ======================================================
-  // ========================= LIST RUANGAN ================
-  // ======================================================
-  Widget ruanganList() {
-    return ListView(
-      padding: const EdgeInsets.all(12),
-      children: [
-        const Text("Hari ini", style: TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 1),
+  Widget _buildHistoryCard(Map<String, dynamic> item) {
+    String title = item['assetName'] ?? 'Item Tanpa Nama';
+    String time = item['timeString'] ?? '-';
+    String date = item['dateString'] ?? '-';
+    String status = item['status'] ?? 'Pending';
+    String gedung = item['building'] ?? '';
+    
+    // Logika Warna Status
+    Color statusColor;
+    if (status == 'Disetujui') {
+      statusColor = Colors.green;
+    } else if (status == 'Ditolak') {
+      statusColor = Colors.red;
+    } else {
+      statusColor = const Color(0xFFF59E0B);
+    }
 
-        Divider(
-          color: Colors.grey, // warna garis
-          thickness: 1, // ketebalan
-          height: 20, // jarak vertikal antar widget
-        ),
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      child: InkWell(
+        onTap: () {
+          // Kirim data ke Detail
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => DetailPeminjamPage(
+                // Data Transaksi (Tetap dikirim karena ini data mati/riwayat)
+                title: title,
+                hariTanggal: date,
+                waktu: time,
+                status: status,
 
-        // 1 SEDANG DIGUNAKAN
-        buildHistoryCard(
-          title: "Ruang 15 Lantai 2 Gedung FST B",
-          time: "13.00 – 15.30 WIB",
-          status: "Sedang Digunakan",
-          color: Colors.blue.shade800,
-          tanggal: "Selasa, 14 Mei 2025",
-          nama: "M. Sakti Guruh Pratama",
-          nim: "F1E122002",
-          noHp: "08123456789",
-        ),
-
-        // 2 TERLAMBAT
-        buildHistoryCard(
-          title: "Laboratorium ICT. 1 Gedung FST A",
-          time: "10.10 – 12.40 WIB",
-          status: "Terlambat",
-          color: Colors.red,
-          tanggal: "Selasa, 14 Mei 2025",
-          nama: "Adit Mahardika",
-          nim: "F1E122001",
-          noHp: "08123456789",
-        ),
-
-        // 3 SELESAI
-        buildHistoryCard(
-          title: "Laboratorium ICT. 2 Gedung FST A",
-          time: "08.00 – 10.40 WIB",
-          status: "Selesai",
-          color: Colors.green.shade700,
-          tanggal: "Selasa, 14 Mei 2025",
-          nama: "Julyiando Akbar",
-          nim: "F1E122002",
-          noHp: "08123456789",
-        ),
-
-        const SizedBox(height: 15),
-        const Text("Kemarin", style: TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 1),
-        Divider(
-          color: Colors.grey, // warna garis
-          thickness: 1, // ketebalan
-          height: 20, // jarak vertikal antar widget
-        ),
-
-        buildHistoryCard(
-          title: "Ruang 08 Lantai 3 Gedung FST B",
-          time: "13.00 – 15.30 WIB",
-          status: "Selesai",
-          color: Colors.green.shade700,
-          tanggal: "Senin, 13 Mei 2025",
-          nama: "John Doe",
-          nim: "F1E122005",
-          noHp: "08123456789",
-        ),
-      ],
-    );
-  }
-
-  // ======================================================
-  // ========================= LIST BARANG ================
-  // ======================================================
-  Widget barangList() {
-    return ListView(
-      padding: const EdgeInsets.all(12),
-      children: [
-        const Text("Hari ini", style: TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 1),
-        Divider(
-          color: Colors.grey, // warna garis
-          thickness: 1, // ketebalan
-          height: 20, // jarak vertikal antar widget
-        ),
-
-        buildHistoryCard(
-          title: "Proyektor 01-FSTA",
-          time: "13.00 – 15.30 WIB",
-          status: "Sedang Digunakan",
-          color: Colors.blue.shade800,
-          tanggal: "Selasa, 14 Mei 2025",
-          nama: "M. Raga Putra",
-          nim: "F1E122010",
-          noHp: "08123456711",
-        ),
-
-        buildHistoryCard(
-          title: "Kabel HDMI 02-FSTB",
-          time: "10.10 – 12.40 WIB",
-          status: "Terlambat",
-          color: Colors.red,
-          tanggal: "Selasa, 14 Mei 2025",
-          nama: "Adit Mahardika",
-          nim: "F1E122001",
-          noHp: "08123456789",
-        ),
-
-        buildHistoryCard(
-          title: "Terminal Listrik 02-FSTB",
-          time: "08.00 – 10.40 WIB",
-          status: "Selesai",
-          color: Colors.green.shade700,
-          tanggal: "Selasa, 14 Mei 2025",
-          nama: "Julyiando Akbar",
-          nim: "F1E122002",
-          noHp: "08123456789",
-        ),
-
-        const SizedBox(height: 15),
-        const Text("Kemarin", style: TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 1),
-        Divider(
-          color: Colors.grey, // warna garis
-          thickness: 1, // ketebalan
-          height: 20, // jarak vertikal antar widget
-        ),
-
-        buildHistoryCard(
-          title: "Kabel HDMI 01-FSTB",
-          time: "13.00 – 15.30 WIB",
-          status: "Selesai",
-          color: Colors.green.shade700,
-          tanggal: "Senin, 13 Mei 2025",
-          nama: "Nadia Zahra",
-          nim: "F1E122008",
-          noHp: "08128765432",
-        ),
-      ],
-    );
-  }
-
-  // ======================================================
-  // ===================== CARD TEMPLATE ==================
-  // ======================================================
-  Widget buildHistoryCard({
-    required String title,
-    required String time,
-    required String status,
-    required Color color,
-    required String tanggal,
-    required String nama,
-    required String nim,
-    required String noHp,
-  }) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => DetailPeminjamPage(
-              title: title,
-              hariTanggal: tanggal,
-              waktu: time,
-              status: status,
-              namaPeminjam: nama,
-              nim: nim,
-              noHp: noHp,
-            ),
-          ),
-        );
-      },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(5),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 17,
-                    ),
-                  ),
-
-                  const SizedBox(height: 4),
-
-                  // ====================== TIME WITH ICON ======================
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.access_time,
-                        color: Colors.white,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(time, style: const TextStyle(color: Colors.white)),
-                    ],
-                  ),
-
-                  const SizedBox(height: 4),
-
-                  Text(status, style: const TextStyle(color: Colors.white)),
-                ],
+                // Data User: CUKUP KIRIM ID-NYA SAJA
+                userId: item['userId'], // <--- KUNCI UTAMA
               ),
             ),
-            const Icon(Icons.arrow_forward_ios, color: Colors.white),
-          ],
+          );
+        },
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            border: Border(left: BorderSide(color: statusColor, width: 5)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF063DA7)),
+                      maxLines: 1, overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  // Badge Status
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: statusColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      status,
+                      style: TextStyle(color: statusColor, fontWeight: FontWeight.bold, fontSize: 12),
+                    ),
+                  ),
+                ],
+              ),
+              if (gedung.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(gedung, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+              ],
+              const SizedBox(height: 12),
+              
+              // Tampilan Tanggal & Waktu (Fixed Overflow)
+              Row(
+                children: [
+                  Icon(Icons.calendar_today, size: 14, color: Colors.grey[600]),
+                  const SizedBox(width: 4),
+                  Text(date, style: const TextStyle(fontSize: 13)),
+                  const SizedBox(width: 16),
+                  Icon(Icons.access_time, size: 14, color: Colors.grey[600]),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      time, 
+                      style: const TextStyle(fontSize: 13),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

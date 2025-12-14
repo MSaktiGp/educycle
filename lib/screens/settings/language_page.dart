@@ -25,25 +25,13 @@ class _LanguagePageState extends State<LanguagePage> {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          "Pengaturan",
+          "Settings",
           style: TextStyle(
             color: Color(0xFFF59E0B),
             fontWeight: FontWeight.bold,
             fontSize: 24,
           ),
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16.0),
-            child: IconButton(
-              icon: const Icon(Icons.notifications_none,color: Color(0xFFF59E0B),
-              size: 28,
-              ),
-              onPressed: () => Navigator.pushNamed(context, '/notification'),
-            ),
-          ),
-        ],
-
       ),
 
       

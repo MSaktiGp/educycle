@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:educycle/constants/colors.dart';
+import '../services/auth_service.dart';
+import '../models/user_model.dart';
+import 'home_page.dart'; // Pastikan import ini ada
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -9,12 +12,16 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  // Controllers for text input fields
+  // Controllers
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  // Password visibility state
+  // State Variables
   bool _isPasswordVisible = false;
+  bool _isLoading = false;
+
+  // Instance Service
+  final AuthService _authService = AuthService();
 
   @override
   void dispose() {
@@ -23,199 +30,316 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  void _handleLogin() {
-    // Get and trim input values
-    final username = _usernameController.text.trim();
+  void _handleLogin() async {
+    final identifier = _usernameController.text.trim();
     final password = _passwordController.text.trim();
 
-    // Validation logic
     String? errorMessage;
-
-    if (username.isEmpty && password.isEmpty) {
-      errorMessage = 'Username dan password tidak boleh kosong';
-    } else if (username.isEmpty) {
-      errorMessage = 'Username tidak boleh kosong';
+    if (identifier.isEmpty && password.isEmpty) {
+      errorMessage = 'NIM/NIP dan password tidak boleh kosong';
+    } else if (identifier.isEmpty) {
+      errorMessage = 'NIM/NIP tidak boleh kosong';
     } else if (password.isEmpty) {
       errorMessage = 'Password tidak boleh kosong';
     }
 
-    // Show error or navigate to home
     if (errorMessage != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(errorMessage),
           backgroundColor: AppColors.dangerRed,
-          duration: const Duration(seconds: 3),
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.all(16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(4),
-          ),
         ),
       );
-    } else {
-      // Navigate to home page
-      Navigator.pushReplacementNamed(context, '/home');
+      return;
     }
+
+    setState(() => _isLoading = true);
+
+    try {
+      // LOGIKA SUFFIX DOMAIN OTOMATIS
+      // Normalisasi ke huruf kecil untuk menghindari masalah case-sensitivity
+      final String lower = identifier.toLowerCase();
+      String emailToSend;
+      if (identifier.contains('@')) {
+        emailToSend = lower;
+      } else {
+        emailToSend = '${lower}@unja.ac.id';
+      }
+
+      // Panggil Service Firebase
+      UserModel? user = await _authService.signIn(emailToSend, password);
+
+      if (!mounted) return;
+
+      if (user != null) {
+        // Navigasi membawa data user
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => HomePage(user: user)),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceAll('Exception: ', '')),
+          backgroundColor: AppColors.dangerRed,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  void _showForgotPasswordDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Lupa Password?"),
+        content: const Text(
+          "Silakan hubungi Staf Administrasi di Tata Usaha untuk melakukan reset password secara manual.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Tutup"),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    // Hitung 40% tinggi layar
+    final double headerHeight = MediaQuery.of(context).size.height * 0.4;
+
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.white30, AppColors.backgroundLightBlue],
+      backgroundColor: Colors.white, // Area bawah gambar tetap putih bersih
+      body: Stack(
+        children: [
+          // ==============================
+          // LAPISAN 1: HEADER GAMBAR (TOP 40%)
+          // ==============================
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: headerHeight, // Batasi tinggi hanya 40%
+            child: Container(
+              decoration: const BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('assets/images/fst.png'), // Gambar FST
+                  fit:
+                      BoxFit.cover, // Memenuhi area, boleh terpotong horizontal
+                  alignment: Alignment.topCenter, // Fokus tengah atas
+                ),
+              ),
+              // Overlay gradien agar teks putih di atasnya lebih terbaca
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withOpacity(0.7), // Atas agak gelap
+                      Colors.black.withOpacity(
+                        0.0,
+                      ), // Bawah transparan (menyatu ke putih)
+                    ],
+                    stops: const [0.0, 0.8],
+                  ),
+                ),
+              ),
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 40),
+
+          // ==============================
+          // LAPISAN 2: KONTEN FORM (SCROLLABLE)
+          // ==============================
+          // Gunakan SafeArea hanya untuk bagian atas agar tidak tertutup notch
+          SafeArea(
+            bottom: false,
+            child: Center(
+              child: SingleChildScrollView(
+                // Beri padding atas ekstra agar konten mulai agak turun dari status bar
+                padding: const EdgeInsets.fromLTRB(24.0, 60.0, 24.0, 24.0),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Welcome text
+                    // Logo placeholder
+                    const SizedBox(height: 80),
+
+                    // Welcome text (TEKS PUTIH KARENA DI ATAS GAMBAR)
                     const Text(
-                      'Selamat Datang,',
+                      'Selamat Datang!',
+                      textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: AppColors.secondaryOrange,
                         fontSize: 28,
-                        fontWeight: FontWeight.bold,
+                        fontWeight:FontWeight.bold,
+                        color: AppColors
+                            .secondaryOrange, // Kontras dengan background FST
+                        shadows: [
+                          Shadow(
+                            blurRadius: 10,
+                            color: Colors.black45,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 8),
-
-                    // Subtitle text
                     const Text(
-                      'Silahkan login untuk masuk ke dalam sistem',
+                      'Silahkan login untuk melanjutkan',
+                      textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: AppColors.textGray,
-                        fontSize: 14,
-                        height: 1.5,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                        shadows: [
+                          Shadow(
+                            blurRadius: 10,
+                            color: Colors.white30,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 40),
+                    // Jarak ini mendorong form input ke bawah, melewati batas gambar
+                    const SizedBox(height: 24),
 
-                    // Username field
-                    const Text(
-                      'Username',
-                      style: TextStyle(
-                        color: AppColors.textDark,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _usernameController,
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(
-                            color: AppColors.borderGray,
-                            width: 1,
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(
-                            color: AppColors.primaryBlue,
-                            width: 1,
-                          ),
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 14,
-                          horizontal: 16,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
+                    // =============================================
+                    // AREA INPUT (Mulai masuk ke area background putih)
+                    // =============================================
 
-                    // Password field
-                    const Text(
-                      'Password',
-                      style: TextStyle(
-                        color: AppColors.textDark,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
+                    // Card pembungkus agar form terlihat 'mengambang' di perbatasan
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.1),
+                            blurRadius: 15,
+                            offset: const Offset(0, 5),
+                            spreadRadius: 5,
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _passwordController,
-                      obscureText: !_isPasswordVisible,
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(
-                            color: AppColors.borderGray,
-                            width: 1,
+                      child: Column(
+                        children: [
+                          // Username/NIP Input
+                          TextFormField(
+                            controller: _usernameController,
+                            decoration: InputDecoration(
+                              labelText: 'NIM / NIP',
+                              hintText: 'NIM / NIP',
+                              prefixIcon: const Icon(
+                                Icons.person_outline,
+                                color: AppColors.primaryBlue,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                  color: AppColors.primaryBlue,
+                                  width: 2,
+                                ),
+                              ),
+                              filled: true,
+                              fillColor: Colors.grey.shade50,
+                            ),
                           ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(
-                            color: AppColors.primaryBlue,
-                            width: 1,
-                          ),
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 14,
-                          horizontal: 16,
-                        ),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _isPasswordVisible
-                                ? Icons.visibility
-                                : Icons.visibility_off,
-                          ),
-                          color: AppColors.textLight,
-                          onPressed: () {
-                            setState(() {
-                              _isPasswordVisible = !_isPasswordVisible;
-                            });
-                          },
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 30),
+                          const SizedBox(height: 16),
 
-                    // Login button
+                          // Password Input
+                          TextFormField(
+                            controller: _passwordController,
+                            obscureText: !_isPasswordVisible,
+                            decoration: InputDecoration(
+                              labelText: 'Password',
+                              prefixIcon: const Icon(
+                                Icons.lock_outline,
+                                color: AppColors.primaryBlue,
+                              ),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _isPasswordVisible
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                  color: AppColors.primaryBlue,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _isPasswordVisible = !_isPasswordVisible;
+                                  });
+                                },
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                  color: AppColors.primaryBlue,
+                                  width: 2,
+                                ),
+                              ),
+                              filled: true,
+                              fillColor: Colors.grey.shade50,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Login Button with Loading State
                     SizedBox(
                       width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: _handleLogin,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryBlue,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(25),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: const Text(
-                          'Log in',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
+                      height: 54,
+                      child: _isLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          : ElevatedButton(
+                              onPressed: _handleLogin,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primaryBlue,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                elevation: 5,
+                                shadowColor: AppColors.primaryBlue.withOpacity(
+                                  0.4,
+                                ),
+                              ),
+                              child: const Text(
+                                'Login',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                            ),
                     ),
                     const SizedBox(height: 40),
 
@@ -223,18 +347,18 @@ class _LoginPageState extends State<LoginPage> {
                     const Center(
                       child: Text(
                         'Copyright EduCycle @2025',
-                        style: TextStyle(
-                          color: AppColors.textLight,
-                          fontSize: 12,
-                        ),
+                        style: TextStyle(color: Colors.grey, fontSize: 12),
                       ),
                     ),
+                    const SizedBox(
+                      height: 20,
+                    ), // Extra padding bawah untuk scroll
                   ],
                 ),
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }

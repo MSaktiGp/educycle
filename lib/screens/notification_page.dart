@@ -1,25 +1,45 @@
 import 'package:flutter/material.dart';
-import 'package:educycle/constants/colors.dart'; 
+import 'package:educycle/constants/colors.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:educycle/models/notification_model.dart';
+import 'package:educycle/services/notification_service.dart';
+import 'package:educycle/models/user_model.dart';
 
-class NotificationPage extends StatelessWidget {
-  const NotificationPage({super.key});
+class NotificationPage extends StatefulWidget {
+  final UserModel? user;
+  const NotificationPage({super.key, this.user});
+
+  @override
+  State<NotificationPage> createState() => _NotificationPageState();
+}
+
+class _NotificationPageState extends State<NotificationPage> {
+  final NotificationService _service = NotificationService();
+  String? _userId;
+
+  @override
+  void initState() {
+    super.initState();
+    _userId = widget.user?.uid ?? FirebaseAuth.instance.currentUser?.uid;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Color(0xFFF5F5F5),
-      
+
       // 1. App Bar
       appBar: AppBar(
         // Tombol kembali (Back Button)
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, 
-          color: Color(0xFFF59E0B),
-          size: 28
+          icon: const Icon(
+            Icons.arrow_back_ios,
+            color: Color(0xFFF59E0B),
+            size: 28,
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        
+
         backgroundColor: AppColors.primaryBlue,
         elevation: 0,
         centerTitle: true,
@@ -34,84 +54,49 @@ class NotificationPage extends StatelessWidget {
       ),
 
       // 2. Body: Daftar Notifikasi
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(vertical: 8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // --- Bagian HARI INI ---
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Text(
-                'Hari Ini',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textDark,
+      body: StreamBuilder<List<NotificationModel>>(
+        stream: _service.streamNotifications(userId: _userId),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(child: Text('Terjadi kesalahan: ${snapshot.error}'));
+          }
+          final items = snapshot.data ?? [];
+          if (items.isEmpty) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Text(
+                  'Belum ada notifikasi',
+                  style: TextStyle(color: AppColors.textGray),
                 ),
               ),
-            ),
-            
-            // Notifikasi 1: Peminjaman Telah Disetujui (Warna Biru Tua)
-            _buildNotificationCard(
-              title: 'Peminjaman Telah Disetujui',
-              subtitle: 'Silahkan ambil kunci sesuai dengan waktu peminjaman.',
-              isImportant: true,
-              isRedDot: true,
-            ),
+            );
+          }
 
-            // Notifikasi 2: Pengingat Pengembalian (Warna Biru Tua)
-            _buildNotificationCard(
-              title: 'Pengingat Pengembalian',
-              subtitle: 'Proyektor 01-FSTB\nWaktu peminjaman Anda telah habis. Segera kembalikan barang yang sedang dipinjam.',
-              isImportant: true,
-              isRedDot: true,
-            ),
-            
-            // Notifikasi 3: Peminjaman Selesai (Warna Abu-abu Terang)
-            _buildNotificationCard(
-              title: 'Peminjaman Selesai',
-              subtitle: 'Proyektor 02-FSTB\nPeminjaman telah selesai. Cek selengkapnya di sini.',
-              isImportant: false,
-            ),
-
-            // Notifikasi 4: Peminjaman Selesai (Warna Abu-abu Terang)
-            _buildNotificationCard(
-              title: 'Peminjaman Selesai',
-              subtitle: 'Terminal Listrik 01-FSTB\nPeminjaman telah selesai. Cek selengkapnya di sini.',
-              isImportant: false,
-            ),
-            
-            const Divider(height: 1), // Garis pemisah visual
-
-            // --- Bagian KEMARIN ---
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Text(
-                'Kemarin',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textDark,
-                ),
-              ),
-            ),
-
-            // Notifikasi 5: Pembaharuan Sistem (Warna Abu-abu Terang)
-            _buildNotificationCard(
-              title: 'Pembaharuan Sistem Versi 1.0.1',
-              subtitle: 'Cek selengkapnya di sini.',
-              isImportant: false,
-            ),
-            
-            // Notifikasi 6: Peminjaman Selesai (Warna Abu-abu Terang)
-            _buildNotificationCard(
-              title: 'Peminjaman Selesai',
-              subtitle: 'Kabel HDMI 02-FSTB\nPeminjaman telah selesai. Cek selengkapnya di sini.',
-              isImportant: false,
-            ),
-          ],
-        ),
+          return ListView.separated(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            itemCount: items.length,
+            separatorBuilder: (context, index) => const Divider(height: 1),
+            itemBuilder: (context, index) {
+              final n = items[index];
+              return _buildNotificationCard(
+                title: n.title,
+                subtitle: n.body,
+                isImportant: n.isImportant,
+                isRedDot: !n.isRead,
+                onTap: () async {
+                  if (!n.isRead) {
+                    await _service.markAsRead(n.id);
+                  }
+                  // could navigate to detail page here
+                },
+              );
+            },
+          );
+        },
       ),
     );
   }
@@ -122,8 +107,11 @@ class NotificationPage extends StatelessWidget {
     required String subtitle,
     required bool isImportant,
     bool isRedDot = false,
+    VoidCallback? onTap,
   }) {
-    final cardColor = isImportant ? AppColors.primaryBlue : AppColors.backgroundLightBlue;
+    final cardColor = isImportant
+        ? AppColors.primaryBlue
+        : AppColors.backgroundLightBlue;
     final titleColor = isImportant ? Colors.white : AppColors.textDark;
     final subtitleColor = isImportant ? Colors.white70 : AppColors.textGray;
 
@@ -134,9 +122,7 @@ class NotificationPage extends StatelessWidget {
         elevation: 1,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         child: InkWell(
-          onTap: () {
-            // Aksi saat notifikasi diklik (misalnya, navigasi ke detail)
-          },
+          onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.all(12.0),
             child: Column(

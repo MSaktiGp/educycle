@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "149221473756",
+    "project_id": "educycle-2f92b",
+    "storage_bucket": "educycle-2f92b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:149221473756:android:e8dd34d4df8ffef036a319",
+        "android_client_info": {
+          "package_name": "com.example.educycle"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA7IuV4k5e96PaOLI8un2Y3yxBAXBeQiVM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
