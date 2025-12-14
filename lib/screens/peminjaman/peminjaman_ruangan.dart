@@ -250,15 +250,6 @@ class _PeminjamanRuanganState extends State<PeminjamanRuangan> {
           'Peminjaman Ruangan',
           style: TextStyle(color: Color(0xFFF59E0B), fontWeight: FontWeight.bold, fontSize: 24),
         ),
-        actions: [
-          InkWell(
-            onTap: () => Navigator.pushNamed(context, '/notification'),
-            child: const Padding(
-              padding: EdgeInsets.only(right: 16.0),
-              child: Icon(Icons.notifications_none, color: Color(0xFFF59E0B), size: 28),
-            ),
-          ),
-        ],
       ),
 
       body: GestureDetector(
