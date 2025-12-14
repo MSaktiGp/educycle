@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
 import 'package:educycle/constants/colors.dart';
-import 'package:educycle/widgets/navbar.dart'; // Import layout navbar
+import '../../models/user_model.dart';
+import '../../services/loan_service.dart';
+import 'status_peminjaman_page.dart';
 
 class DetailPeminjamanBarangArguments {
   final String itemName;
@@ -19,45 +22,43 @@ class DetailPeminjamanBarangArguments {
 }
 
 class DetailPeminjamanBarangPage extends StatefulWidget {
-  const DetailPeminjamanBarangPage({super.key});
+  final UserModel user;
+  const DetailPeminjamanBarangPage({super.key, required this.user});
 
   @override
   State<DetailPeminjamanBarangPage> createState() =>
       _DetailPeminjamanBarangPageState();
 }
 
-class _DetailPeminjamanBarangPageState extends State<DetailPeminjamanBarangPage> {
+class _DetailPeminjamanBarangPageState
+    extends State<DetailPeminjamanBarangPage> {
+  // DUA VARIABEL WAKTU (Mulai & Selesai)
   TimeOfDay? _selectedStartTime;
-  late DetailPeminjamanBarangArguments _data;
+  TimeOfDay? _selectedEndTime;
   
+  late DetailPeminjamanBarangArguments _data;
+
   String? _selectedBuilding;
   String? _selectedRoom;
   DateTime? _selectedDate;
+  bool _isSubmitting = false;
 
   final GlobalKey _buildingDropdownKey = GlobalKey();
   final GlobalKey _roomDropdownKey = GlobalKey();
   OverlayEntry? _buildingOverlayEntry;
   OverlayEntry? _roomOverlayEntry;
 
+  // List Gedung tetap Hardcode sebagai Kategori Utama (Kecuali Anda punya collection 'buildings' terpisah)
   final List<String> _buildingOptions = ['Gedung FST A', 'Gedung FST B'];
-  final Map<String, List<String>> _roomsByBuilding = {
-    'Gedung FST A': [
-      'Ruang 01 Lantai 2 Gedung FST A',
-      'Ruang 02 Lantai 2 Gedung FST A',
-      'Ruang 03 Lantai 3 Gedung FST A',
-    ],
-    'Gedung FST B': [
-      'Laboratorim ICT 1 FST Gedung A',
-      'Ruang 08 Lantai 2 Gedung FST B',
-      'Ruang 09 Lantai 2 Gedung FST B',
-    ],
-  };
+  
+  // HAPUS _roomsByBuilding KARENA KITA AKAN AMBIL DARI DATABASE
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (ModalRoute.of(context)!.settings.arguments != null) {
-      final rawArgs = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+      final rawArgs =
+          ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
 
       _data = DetailPeminjamanBarangArguments(
         itemName: rawArgs['itemName'] as String,
@@ -68,6 +69,11 @@ class _DetailPeminjamanBarangPageState extends State<DetailPeminjamanBarangPage>
       );
 
       _selectedBuilding = _data.selectedBuilding;
+      
+      // Ambil Raw Date
+      if (rawArgs['rawDate'] != null) {
+        _selectedDate = rawArgs['rawDate'] as DateTime;
+      }
     } else {
       _data = DetailPeminjamanBarangArguments(
         itemName: 'Kabel HDMI',
@@ -79,22 +85,9 @@ class _DetailPeminjamanBarangPageState extends State<DetailPeminjamanBarangPage>
     }
   }
 
-  String _getDayName(int weekday) {
-    switch (weekday) {
-      case 1: return 'Senin';
-      case 2: return 'Selasa';
-      case 3: return 'Rabu';
-      case 4: return 'Kamis';
-      case 5: return 'Jumat';
-      case 6: return 'Sabtu';
-      case 7: return 'Minggu';
-      default: return '';
-    }
-  }
-
   String _formatDate(DateTime date) {
-    final dayName = _getDayName(date.weekday);
-    return '$dayName, ${date.day}/${date.month}/${date.year}';
+    // Format: dd/mm/yyyy
+    return "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}";
   }
 
   void _hideAllOverlays() {
@@ -104,12 +97,11 @@ class _DetailPeminjamanBarangPageState extends State<DetailPeminjamanBarangPage>
     _roomOverlayEntry = null;
   }
 
+  // Dropdown Gedung (Tetap Statis / Kategori)
   void _showBuildingDropdownOverlay() {
     _hideAllOverlays();
-
     final RenderBox? renderBox = _buildingDropdownKey.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox == null) return;
-
     final size = renderBox.size;
     final offset = renderBox.localToGlobal(Offset.zero);
 
@@ -131,7 +123,7 @@ class _DetailPeminjamanBarangPageState extends State<DetailPeminjamanBarangPage>
                 onTap: () {
                   setState(() {
                     _selectedBuilding = building;
-                    _selectedRoom = null;
+                    _selectedRoom = null; // Reset ruangan jika gedung berubah
                   });
                   _hideAllOverlays();
                 },
@@ -140,16 +132,8 @@ class _DetailPeminjamanBarangPageState extends State<DetailPeminjamanBarangPage>
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        building,
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: isSelected ? AppColors.primaryBlue : Colors.black87,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                        ),
-                      ),
-                      if (isSelected)
-                        Icon(Icons.check, color: AppColors.primaryBlue, size: 20),
+                      Text(building, style: TextStyle(color: isSelected ? AppColors.primaryBlue : Colors.black87, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+                      if (isSelected) Icon(Icons.check, color: AppColors.primaryBlue, size: 20),
                     ],
                   ),
                 ),
@@ -159,15 +143,13 @@ class _DetailPeminjamanBarangPageState extends State<DetailPeminjamanBarangPage>
         ),
       ),
     );
-
     Overlay.of(context).insert(_buildingOverlayEntry!);
   }
 
+  // --- DROPDOWN RUANGAN (DINAMIS DARI FIREBASE) ---
   void _showRoomDropdownOverlay() {
     if (_selectedBuilding == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Pilih Gedung terlebih dahulu')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pilih Gedung terlebih dahulu')));
       return;
     }
 
@@ -175,11 +157,8 @@ class _DetailPeminjamanBarangPageState extends State<DetailPeminjamanBarangPage>
 
     final RenderBox? renderBox = _roomDropdownKey.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox == null) return;
-
     final size = renderBox.size;
     final offset = renderBox.localToGlobal(Offset.zero);
-
-    final rooms = _roomsByBuilding[_selectedBuilding!] ?? [];
 
     _roomOverlayEntry = OverlayEntry(
       builder: (context) => Positioned(
@@ -190,72 +169,87 @@ class _DetailPeminjamanBarangPageState extends State<DetailPeminjamanBarangPage>
           elevation: 8.0,
           borderRadius: BorderRadius.circular(8),
           color: Colors.white,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 200),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: rooms.map((room) {
-                  final isSelected = _selectedRoom == room;
-                  return InkWell(
-                    onTap: () {
-                      setState(() {
-                        _selectedRoom = room;
-                      });
-                      _hideAllOverlays();
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              room,
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: isSelected ? AppColors.primaryBlue : Colors.black87,
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                              ),
+          // MENGGUNAKAN STREAM BUILDER UNTUK AMBIL DATA REALTIME
+          child: StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance.collection('rooms').snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) return const Padding(padding: EdgeInsets.all(16), child: Text("Gagal memuat ruangan"));
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Padding(padding: EdgeInsets.all(16), child: Center(child: CircularProgressIndicator()));
+              }
+
+              final allRooms = snapshot.data?.docs ?? [];
+              
+              // FILTER MANUAL DI SINI (Karena struktur 'location' berisi string panjang)
+              // Kita cari ruangan yang lokasi-nya MENGANDUNG nama gedung yang dipilih.
+              final filteredRooms = allRooms.where((doc) {
+                final data = doc.data() as Map<String, dynamic>;
+                final location = data['location']?.toString() ?? '';
+                return location.contains(_selectedBuilding!); 
+              }).toList();
+
+              if (filteredRooms.isEmpty) {
+                return const Padding(
+                  padding: EdgeInsets.all(16), 
+                  child: Text("Tidak ada ruangan terdaftar di gedung ini", style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey))
+                );
+              }
+
+              return ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 250), // Batasi tinggi agar bisa scroll
+                child: ListView.builder(
+                  padding: EdgeInsets.zero,
+                  shrinkWrap: true,
+                  itemCount: filteredRooms.length,
+                  itemBuilder: (context, index) {
+                    final data = filteredRooms[index].data() as Map<String, dynamic>;
+                    final roomName = data['name'] ?? 'Ruangan Tanpa Nama';
+                    final isSelected = _selectedRoom == roomName;
+
+                    return InkWell(
+                      onTap: () {
+                        setState(() { _selectedRoom = roomName; });
+                        _hideAllOverlays();
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                roomName,
+                                style: TextStyle(
+                                  color: isSelected ? AppColors.primaryBlue : Colors.black87,
+                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal
+                                )
+                              )
                             ),
-                          ),
-                          if (isSelected)
-                            Icon(Icons.check, color: AppColors.primaryBlue, size: 20),
-                        ],
+                            if (isSelected) Icon(Icons.check, color: AppColors.primaryBlue, size: 20),
+                          ],
+                        ),
                       ),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
+                    );
+                  },
+                ),
+              );
+            },
           ),
         ),
       ),
     );
-
     Overlay.of(context).insert(_roomOverlayEntry!);
   }
 
-  Future<void> _pickTime() async {
+  // FUNGSI PILIH WAKTU (Generic)
+  Future<void> _pickTime(bool isStart) async {
     final TimeOfDay? newTime = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
       builder: (context, child) {
-        final primaryColor = AppColors.primaryBlue;
         return Theme(
           data: ThemeData.light().copyWith(
-            colorScheme: ColorScheme.light(
-              primary: primaryColor,
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: Colors.black,
-            ),
-            textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(
-                foregroundColor: primaryColor,
-              ),
-            ),
+            colorScheme: ColorScheme.light(primary: AppColors.primaryBlue, onPrimary: Colors.white, onSurface: Colors.black),
           ),
           child: child!,
         );
@@ -264,160 +258,191 @@ class _DetailPeminjamanBarangPageState extends State<DetailPeminjamanBarangPage>
 
     if (newTime != null) {
       setState(() {
-        _selectedStartTime = newTime;
+        if (isStart) {
+          _selectedStartTime = newTime;
+          _selectedEndTime = null; 
+        } else {
+          _selectedEndTime = newTime;
+        }
       });
     }
   }
 
-  void _submitPeminjaman() {
-    if (_selectedBuilding == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mohon pilih Gedung')),
-      );
+  void _submitPeminjaman() async {
+    if (_selectedBuilding == null || _selectedDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Lengkapi data gedung dan tanggal')));
+      return;
+    }
+    
+    // VALIDASI WAKTU
+    if (_selectedStartTime == null || _selectedEndTime == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Mohon isi Jam Mulai dan Jam Selesai')));
       return;
     }
 
-    if (_selectedRoom == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mohon pilih Ruangan')),
-      );
+    // Validasi Logika: Jam Selesai harus setelah Jam Mulai
+    final double startDouble = _selectedStartTime!.hour + _selectedStartTime!.minute / 60.0;
+    final double endDouble = _selectedEndTime!.hour + _selectedEndTime!.minute / 60.0;
+
+    if (endDouble <= startDouble) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Jam Selesai harus lebih besar dari Jam Mulai')));
       return;
     }
 
-    if (_selectedDate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mohon pilih Tanggal')),
+    // Format Waktu Range
+    final timeString = "${_selectedStartTime!.format(context)} - ${_selectedEndTime!.format(context)} WIB";
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      await LoanService().createLoan(
+        type: 'barang',
+        assetId: _data.itemId,
+        assetName: _data.itemName,
+        building: _selectedBuilding!,
+        date: _formatDate(_selectedDate!),
+        time: timeString, // Waktu hasil pilihan user
+        room: _selectedRoom,
       );
-      return;
-    }
 
-    if (_selectedStartTime == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mohon pilih Jam Peminjaman')),
-      );
-      return;
-    }
+      if (!mounted) return;
 
-    // Tampilkan dialog notifikasi sukses
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext dialogContext) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: const Color(0xFFE8EAF6),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.info_outline,
-                  size: 32,
-                  color: Colors.grey.shade700,
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Permintaan peminjaman telah diajukan.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: Color(0xFF1A1A1A),
-                    fontWeight: FontWeight.w600,
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  'Mohon tunggu persetujuan dari staf.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: Color(0xFF1A1A1A),
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF3B82F6),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(50),
-                      ),
-                      elevation: 0,
-                    ),
-                    onPressed: () {
-                      Navigator.pop(dialogContext); // Tutup dialog
-                      
-                      // Navigate ke status peminjaman
-                      final endTime = _selectedStartTime!.replacing(
-                        hour: (_selectedStartTime!.hour + 2) % 24,
-                        minute: _selectedStartTime!.minute,
-                      );
-
-                      Navigator.pushNamed(
-                        context,
-                        '/status_peminjaman',
-                        arguments: {
-                          'type': 'barang',
-                          'itemName': _data.itemName,
-                          'itemCode': _data.itemCode,
-                          'building': _selectedBuilding,
-                          'room': _selectedRoom,
-                          'date': _formatDate(_selectedDate!),
-                          'time': '${_selectedStartTime!.format(context)} - ${endTime.format(context)} WIB',
-                          'status': 'Menunggu Persetujuan',
-                        },
-                      );
-                    },
-                    child: const Text(
-                      'Lihat Status Peminjaman',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext dialogContext) {
+          return Dialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.check_circle, size: 60, color: Colors.green),
+                  const SizedBox(height: 16),
+                  const Text('Berhasil!', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  const Text('Peminjaman berhasil diajukan.', textAlign: TextAlign.center),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryBlue),
+                      onPressed: () {
+                        Navigator.pop(dialogContext);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => StatusPeminjamanPage(user: widget.user),
+                            settings: RouteSettings(
+                              arguments: {
+                                'type': 'barang',
+                                'itemName': _data.itemName,
+                                'itemCode': _data.itemCode,
+                                'building': _selectedBuilding,
+                                'room': _selectedRoom,
+                                'date': _formatDate(_selectedDate!),
+                                'time': timeString,
+                                'status': 'Menunggu Persetujuan',
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                      child: const Text('Lihat Status', style: TextStyle(color: Colors.white)),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Gagal: $e"), backgroundColor: Colors.red));
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
+  // WIDGET UI INPUT WAKTU (DUA KOLOM)
+  Widget _buildTimeRangePicker() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(bottom: 8.0),
+          child: Text("Durasi Peminjaman", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1A1A1A))),
+        ),
+        Row(
+          children: [
+            // JAM MULAI
+            Expanded(
+              child: InkWell(
+                onTap: () => _pickTime(true),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.primaryBlue, width: 1.5),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _selectedStartTime?.format(context) ?? "Mulai",
+                        style: TextStyle(fontWeight: FontWeight.w600, color: _selectedStartTime == null ? Colors.grey : Colors.black87),
+                      ),
+                      const Icon(Icons.access_time, size: 20, color: AppColors.primaryBlue),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const Padding(padding: EdgeInsets.symmetric(horizontal: 8), child: Text("-", style: TextStyle(fontWeight: FontWeight.bold))),
+            // JAM SELESAI
+            Expanded(
+              child: InkWell(
+                onTap: () => _pickTime(false),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.primaryBlue, width: 1.5),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _selectedEndTime?.format(context) ?? "Selesai",
+                        style: TextStyle(fontWeight: FontWeight.w600, color: _selectedEndTime == null ? Colors.grey : Colors.black87),
+                      ),
+                      const Icon(Icons.access_time_filled, size: 20, color: AppColors.primaryBlue),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+      ],
     );
   }
 
-  Widget _buildDropdownField(
-    String label,
-    String hintText, {
-    VoidCallback? onTap,
-    GlobalKey? key,
-  }) {
+  // Helper UI Dropdown
+  Widget _buildDropdownField(String label, String hintText, {VoidCallback? onTap, GlobalKey? key}) {
     final String displayText = label.isNotEmpty ? label : hintText;
     final bool isPlaceholder = label.isEmpty;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.only(bottom: 8.0),
-          child: Text(
-            hintText,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1A1A1A),
-            ),
-          ),
+          child: Text(hintText, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1A1A1A))),
         ),
         InkWell(
           key: key,
@@ -432,16 +457,7 @@ class _DetailPeminjamanBarangPageState extends State<DetailPeminjamanBarangPage>
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(
-                  child: Text(
-                    displayText,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: isPlaceholder ? Colors.grey.shade600 : const Color(0xff1A1A1A),
-                    ),
-                  ),
-                ),
+                Expanded(child: Text(displayText, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: isPlaceholder ? Colors.grey.shade600 : const Color(0xff1A1A1A)))),
                 const Icon(Icons.keyboard_arrow_down, size: 24),
               ],
             ),
@@ -452,72 +468,10 @@ class _DetailPeminjamanBarangPageState extends State<DetailPeminjamanBarangPage>
     );
   }
 
-  Widget _buildTimeInputField() {
-    String timeRange = "";
-
-    if (_selectedStartTime != null) {
-      final endTime = _selectedStartTime!.replacing(
-        hour: (_selectedStartTime!.hour + 2) % 24,
-        minute: _selectedStartTime!.minute,
-      );
-      timeRange = "${_selectedStartTime!.format(context)} - ${endTime.format(context)} WIB";
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Padding(
-          padding: EdgeInsets.only(bottom: 8.0),
-          child: Text(
-            "Jam",
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1A1A1A),
-            ),
-          ),
-        ),
-        InkWell(
-          onTap: _pickTime,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.primaryBlue, width: 2),
-              color: Colors.white,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  timeRange.isEmpty ? "Pilih Jam" : timeRange,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: timeRange.isEmpty ? Colors.grey.shade600 : const Color(0xff1A1A1A),
-                  ),
-                ),
-                const Icon(Icons.keyboard_arrow_down, size: 24),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-      ],
-    );
-  }
-
-  Widget _buildBottomNavigationBar(
-      BuildContext context, Color primaryColor, Color accentColor) {
-    const activeIndex = 0;
-
+  // HELPER BOTTOM NAVBAR
+  Widget _buildBottomNavigationBar(BuildContext context, Color primaryColor, Color accentColor) {
     return Container(
-      decoration: BoxDecoration(
-        color: primaryColor,
-        border: Border(
-          top: BorderSide(color: accentColor, width: 3),
-        ),
-      ),
+      decoration: BoxDecoration(color: primaryColor, border: Border(top: BorderSide(color: accentColor, width: 3))),
       child: Padding(
         padding: const EdgeInsets.only(top: 6),
         child: BottomNavigationBar(
@@ -525,19 +479,11 @@ class _DetailPeminjamanBarangPageState extends State<DetailPeminjamanBarangPage>
           selectedItemColor: accentColor,
           unselectedItemColor: Colors.white,
           iconSize: 40,
-          currentIndex: activeIndex,
+          currentIndex: 0,
           type: BottomNavigationBarType.fixed,
-          selectedFontSize: 0,
-          unselectedFontSize: 0,
-          onTap: (index) {
-            if (index == activeIndex) {
-              return;
-            } else if (index == 1) {
-              Navigator.pushReplacementNamed(context, '/settings');
-            } else if (index == 2) {
-              Navigator.pushReplacementNamed(context, '/profile');
-            }
-          },
+          showSelectedLabels: false,
+          showUnselectedLabels: false,
+          onTap: (index) { if(index==0) Navigator.of(context).popUntil((route) => route.isFirst); },
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
             BottomNavigationBarItem(icon: Icon(Icons.settings), label: ''),
@@ -549,43 +495,15 @@ class _DetailPeminjamanBarangPageState extends State<DetailPeminjamanBarangPage>
   }
 
   @override
-  void dispose() {
-    _hideAllOverlays();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final primaryColor = AppColors.primaryBlue;
-    const accentColor = Color(0xFFF59E0B);
-
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: accentColor, size: 28),
-          onPressed: () => Navigator.pop(context),
-        ),
-        backgroundColor: primaryColor,
+        leading: IconButton(icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFFF59E0B), size: 28), onPressed: () => Navigator.pop(context)),
+        backgroundColor: AppColors.primaryBlue,
         elevation: 0,
         centerTitle: true,
-        title: const Text(
-          'Peminjaman',
-          style: TextStyle(
-            color: accentColor,
-            fontWeight: FontWeight.bold,
-            fontSize: 24,
-          ),
-        ),
-        actions: [
-          InkWell(
-            onTap: () => Navigator.pushNamed(context, '/notification'),
-            child: const Padding(
-              padding: EdgeInsets.only(right: 16.0),
-              child: Icon(Icons.notifications_none, color: accentColor, size: 28),
-            ),
-          ),
-        ],
+        title: const Text('Peminjaman', style: TextStyle(color: Color(0xFFF59E0B), fontWeight: FontWeight.bold, fontSize: 24)),
       ),
       body: GestureDetector(
         onTap: _hideAllOverlays,
@@ -594,89 +512,38 @@ class _DetailPeminjamanBarangPageState extends State<DetailPeminjamanBarangPage>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildDropdownField(
-                _data.itemCode,
-                'Barang',
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Barang: ${_data.itemName} (${_data.itemCode})')),
-                  );
-                },
-              ),
-              _buildDropdownField(
-                _selectedBuilding ?? '',
-                'Gedung',
-                onTap: _showBuildingDropdownOverlay,
-                key: _buildingDropdownKey,
-              ),
-              _buildDropdownField(
-                _selectedRoom ?? '',
-                'Ruangan',
-                onTap: _showRoomDropdownOverlay,
-                key: _roomDropdownKey,
-              ),
-              _buildDropdownField(
-                _selectedDate != null ? _formatDate(_selectedDate!) : '',
-                'Hari, Tanggal',
-                onTap: () async {
-                  _hideAllOverlays();
-                  final DateTime? picked = await showDatePicker(
-                    context: context,
-                    initialDate: _selectedDate ?? DateTime.now(),
-                    firstDate: DateTime.now(),
-                    lastDate: DateTime(2030),
-                    builder: (context, child) {
-                      return Theme(
-                        data: ThemeData.light().copyWith(
-                          colorScheme: ColorScheme.light(
-                            primary: primaryColor,
-                            onPrimary: Colors.white,
-                            onSurface: Colors.black,
-                          ),
-                          textButtonTheme: TextButtonThemeData(
-                            style: TextButton.styleFrom(foregroundColor: primaryColor),
-                          ),
-                        ),
-                        child: child!,
-                      );
-                    },
-                  );
-                  if (picked != null) {
-                    setState(() {
-                      _selectedDate = picked;
-                    });
-                  }
-                },
-              ),
-              _buildTimeInputField(),
+              _buildDropdownField(_data.itemCode, 'Barang', onTap: () {}),
+              _buildDropdownField(_selectedBuilding ?? '', 'Gedung', onTap: _showBuildingDropdownOverlay, key: _buildingDropdownKey),
+              _buildDropdownField(_selectedRoom ?? '', 'Ruangan', onTap: _showRoomDropdownOverlay, key: _roomDropdownKey),
+              _buildDropdownField(_selectedDate != null ? _formatDate(_selectedDate!) : '', 'Hari, Tanggal', onTap: () async {
+                _hideAllOverlays();
+                final DateTime? picked = await showDatePicker(
+                  context: context,
+                  initialDate: _selectedDate ?? DateTime.now(),
+                  firstDate: DateTime.now(),
+                  lastDate: DateTime(2030),
+                  builder: (context, child) => Theme(data: ThemeData.light().copyWith(colorScheme: ColorScheme.light(primary: AppColors.primaryBlue, onPrimary: Colors.white, onSurface: Colors.black)), child: child!),
+                );
+                if (picked != null) setState(() => _selectedDate = picked);
+              }),
+              
+              _buildTimeRangePicker(),
+
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: _submitPeminjaman,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: accentColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(50),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    'Ajukan',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A1A1A),
-                    ),
-                  ),
+                  onPressed: _isSubmitting ? null : _submitPeminjaman,
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFF59E0B), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))),
+                  child: _isSubmitting ? const CircularProgressIndicator(color: Colors.white) : const Text('Ajukan', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1A1A1A))),
                 ),
               ),
             ],
           ),
         ),
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(context, primaryColor, accentColor),
+      bottomNavigationBar: _buildBottomNavigationBar(context, AppColors.primaryBlue, const Color(0xFFF59E0B)),
     );
   }
 }

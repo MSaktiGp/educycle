@@ -1,9 +1,15 @@
+import 'package:educycle/screens/detail_riwayat.dart';
+import 'package:educycle/screens/peminjaman/detail_peminjaman_ruangan.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:educycle/constants/colors.dart';
-import 'package:educycle/widgets/navbar.dart'; // Import layout navbar
+import 'package:educycle/widgets/navbar.dart';
+import '../../models/user_model.dart'; 
 
 class PeminjamanRuangan extends StatefulWidget {
-  const PeminjamanRuangan({super.key});
+  final UserModel user; 
+
+  const PeminjamanRuangan({super.key, required this.user});
 
   @override
   State<PeminjamanRuangan> createState() => _PeminjamanRuanganState();
@@ -15,42 +21,12 @@ class _PeminjamanRuanganState extends State<PeminjamanRuangan> {
 
   final GlobalKey _buildingDropdownKey = GlobalKey();
   OverlayEntry? _buildingOverlayEntry;
+  
   final List<String> _buildingOptions = ['Gedung FST A', 'Gedung FST B'];
 
-  final List<Map<String, dynamic>> availableRooms = [
-    {'name': 'Ruang 08 Lantai 2 Gedung FST B', 'capacity': 30, 'id': 'B208-1'},
-    {'name': 'Ruang 09 Lantai 2 Gedung FST B', 'capacity': 25, 'id': 'B209-2'},
-    {'name': 'Ruang 01 Lantai 3 Gedung FST B', 'capacity': 50, 'id': 'B301-3'},
-    {'name': 'Ruang 02 Lantai 3 Gedung FST B', 'capacity': 40, 'id': 'B302-4'},
-    {'name': 'Ruang Lab ICT 1 Gedung FST A', 'capacity': 40, 'id': 'A_ICT1-5'},
-    {'name': 'Ruang Lab ICT 2 Gedung FST A', 'capacity': 40, 'id': 'A_ICT2-6'},
-    {'name': 'Ruang Lab Komputasi Sains Gedung FST A', 'capacity': 40, 'id': 'A_KS-7'},
-  ];
-
-  String _getDayName(int weekday) {
-    switch (weekday) {
-      case 1:
-        return 'Senin';
-      case 2:
-        return 'Selasa';
-      case 3:
-        return 'Rabu';
-      case 4:
-        return 'Kamis';
-      case 5:
-        return 'Jumat';
-      case 6:
-        return 'Sabtu';
-      case 7:
-        return 'Minggu';
-      default:
-        return '';
-    }
-  }
-
   String _formatDate(DateTime date) {
-    final dayName = _getDayName(date.weekday);
-    return '$dayName, ${date.day}/${date.month}/${date.year}';
+    // Format: dd/mm/yyyy
+    return "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}";
   }
 
   void _hideAllOverlays() {
@@ -60,11 +36,8 @@ class _PeminjamanRuanganState extends State<PeminjamanRuangan> {
 
   void _showBuildingDropdownOverlay() {
     _hideAllOverlays();
-
-    final RenderBox? renderBox =
-        _buildingDropdownKey.currentContext?.findRenderObject() as RenderBox?;
+    final RenderBox? renderBox = _buildingDropdownKey.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox == null) return;
-
     final size = renderBox.size;
     final offset = renderBox.localToGlobal(Offset.zero);
 
@@ -90,8 +63,7 @@ class _PeminjamanRuanganState extends State<PeminjamanRuangan> {
                   _hideAllOverlays();
                 },
                 child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -99,9 +71,7 @@ class _PeminjamanRuanganState extends State<PeminjamanRuangan> {
                         building,
                         style: TextStyle(
                           fontSize: 16,
-                          color: isSelected
-                              ? AppColors.primaryBlue
-                              : Colors.black87,
+                          color: isSelected ? AppColors.primaryBlue : Colors.black87,
                           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                         ),
                       ),
@@ -116,13 +86,10 @@ class _PeminjamanRuanganState extends State<PeminjamanRuangan> {
         ),
       ),
     );
-
     Overlay.of(context).insert(_buildingOverlayEntry!);
   }
 
-
-  Widget _buildDropdownField(
-      String label, String hintText, {VoidCallback? onTap, GlobalKey? key}) {
+  Widget _buildDropdownField(String label, String hintText, {VoidCallback? onTap, GlobalKey? key}) {
     final String displayText = label.isNotEmpty ? label : hintText;
     final bool isPlaceholder = label.isEmpty;
 
@@ -135,14 +102,6 @@ class _PeminjamanRuanganState extends State<PeminjamanRuangan> {
           color: const Color(0xFFF5F5F5),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: Colors.grey.shade400, width: 1),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              spreadRadius: 1,
-              blurRadius: 3,
-              offset: const Offset(0, 2),
-            ),
-          ],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -161,7 +120,11 @@ class _PeminjamanRuanganState extends State<PeminjamanRuangan> {
     );
   }
 
-  Widget _buildRoomCard(String roomName, int capacity, String roomId) {
+  Widget _buildRoomCard(Map<String, dynamic> data, String docId) {
+    String name = data['name'] ?? 'Ruangan Tanpa Nama';
+    int capacity = data['capacity'] ?? 0;
+    String location = data['location'] ?? '-';
+
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -181,7 +144,7 @@ class _PeminjamanRuanganState extends State<PeminjamanRuangan> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        roomName,
+                        name,
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
@@ -189,15 +152,22 @@ class _PeminjamanRuanganState extends State<PeminjamanRuangan> {
                         ),
                       ),
                       const SizedBox(height: 4),
+                      Text(
+                        location, 
+                        style: const TextStyle(
+                          fontSize: 14, 
+                          color: Colors.white70,
+                          fontStyle: FontStyle.italic
+                        ),
+                      ),
+                      const SizedBox(height: 4),
                       Row(
                         children: [
-                          const Icon(Icons.person,
-                              color: Color(0xFFF5F5F5), size: 16),
+                          const Icon(Icons.people, color: Color(0xFFF5F5F5), size: 16),
                           const SizedBox(width: 4),
                           Text(
                             'Kapasitas $capacity orang',
-                            style: const TextStyle(
-                                fontSize: 14, color: Color(0xFFF5F5F5)),
+                            style: const TextStyle(fontSize: 14, color: Color(0xFFF5F5F5)),
                           ),
                         ],
                       ),
@@ -211,22 +181,31 @@ class _PeminjamanRuanganState extends State<PeminjamanRuangan> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {                  
-                  Navigator.pushNamed(
-                    context, '/detail_peminjaman_ruangan',
-                    arguments: {
-                      'roomId': roomId,
-                      'roomName': roomName,
-                      'capacity': capacity,
-                      'selectedDate': _selectedDate != null ? _formatDate(_selectedDate!) : null,
-                      'selectedBuilding': _selectedBuilding,
-                    },
+                  // NAVIGASI: Menggunakan push dan mengirim User + RawDate
+                  Navigator.push(
+                    context, 
+                    MaterialPageRoute(
+                      builder: (context) => DetailPeminjamanRuangan(
+                        user: widget.user, 
+                      ),
+                      settings: RouteSettings(
+                        arguments: {
+                          'roomId': docId,
+                          'roomName': name,
+                          'capacity': capacity,
+                          // Format String
+                          'selectedDate': _selectedDate != null ? _formatDate(_selectedDate!) : null,
+                          // Objek Asli (PENTING)
+                          'rawDate': _selectedDate, 
+                          'selectedBuilding': _selectedBuilding,
+                        }
+                      )
+                    ),
                   );
                 },
-
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFF59E0B),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   elevation: 0,
                 ),
@@ -254,138 +233,153 @@ class _PeminjamanRuanganState extends State<PeminjamanRuangan> {
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = AppColors.primaryBlue;
-    const accentColor = Color(0xFFF59E0B);
-    final bool allFiltersSelected = _selectedBuilding != null && _selectedDate != null;
+    // Validasi Tanggal tetap kita pakai (agar user pilih tanggal dulu)
+    final bool isReadyToSearch = _selectedDate != null;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: accentColor, size: 28),
+          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFFF59E0B), size: 28),
           onPressed: () => Navigator.pop(context),
         ),
-
-        backgroundColor: primaryColor,
+        backgroundColor: AppColors.primaryBlue,
         elevation: 0,
         centerTitle: true,
         title: const Text(
-          'Peminjaman',
-          style: TextStyle(
-            color: accentColor,
-            fontWeight: FontWeight.bold,
-            fontSize: 24,
-          ),
+          'Peminjaman Ruangan',
+          style: TextStyle(color: Color(0xFFF59E0B), fontWeight: FontWeight.bold, fontSize: 24),
         ),
-
         actions: [
           InkWell(
-            onTap: () {
-              Navigator.pushNamed(context, '/notification');
-            },
-
+            onTap: () => Navigator.pushNamed(context, '/notification'),
             child: const Padding(
               padding: EdgeInsets.only(right: 16.0),
-              child: Icon(Icons.notifications_none, color: accentColor, size: 28),
+              child: Icon(Icons.notifications_none, color: Color(0xFFF59E0B), size: 28),
             ),
           ),
         ],
       ),
 
-
       body: GestureDetector(
-        onTap: () {
-          _hideAllOverlays();
-        },
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildDropdownField(
-                _selectedBuilding ?? '',
-                'Pilih Gedung',
-                onTap: _showBuildingDropdownOverlay,
-                key: _buildingDropdownKey, 
-              ),
-
-              const SizedBox(height: 16),
-              _buildDropdownField(
-                _selectedDate != null ? _formatDate(_selectedDate!) : '',
-                'Hari, Tanggal',
-                onTap: () async {
-                  _hideAllOverlays();
-
-                  final DateTime? picked = await showDatePicker(
-                    context: context,
-                    initialDate: _selectedDate ?? DateTime.now(),
-                    firstDate: DateTime.now(),
-                    lastDate: DateTime(2030),
-                    builder: (context, child) {
-                      return Theme(
-                        data: ThemeData.light().copyWith(
-                          colorScheme: ColorScheme.light(
-                            primary: primaryColor,
-                            onPrimary: Colors.white,
-                            onSurface: Colors.black,
-                          ),
-                          textButtonTheme: TextButtonThemeData(
-                            style: TextButton.styleFrom(
-                              foregroundColor: primaryColor,
-                            ),
-                          ),
-                        ),
-                        child: child!,
-                      );
-                    },
-                  );
-                  if (picked != null) {
-                    setState(() {
-                      _selectedDate = picked;
-                    });
-                  }
-                },
-              ),
-
-              const SizedBox(height: 24),
-              const Text(
-                'Ruangan Tersedia',
-                style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF333333)),
-              ),
-
-              const SizedBox(height: 16),
-              if (!allFiltersSelected)
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Center(
-                    child: Text(
-                      'Silakan pilih Gedung dan Tanggal terlebih dahulu untuk melihat ruangan yang tersedia.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          color: Colors.grey.shade700,
-                          fontStyle: FontStyle.italic),
-                    ),
+        onTap: _hideAllOverlays,
+        child: Column(
+          children: [
+            // BAGIAN FILTER
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  _buildDropdownField(
+                    _selectedBuilding ?? '',
+                    'Pilih Gedung',
+                    onTap: _showBuildingDropdownOverlay,
+                    key: _buildingDropdownKey, 
                   ),
-                )
-              else
-                ...availableRooms
-                    .where((room) => room['name']
-                        .toString()
-                        .contains(_selectedBuilding!.split(' ').last))
-                    .map((room) => _buildRoomCard(
-                          room['name'] as String,
-                          room['capacity'] as int,
-                          room['id'] as String,
-                        ))
-            ],
-          ),
+                  const SizedBox(height: 16),
+                  _buildDropdownField(
+                    _selectedDate != null ? _formatDate(_selectedDate!) : '',
+                    'Hari, Tanggal',
+                    onTap: () async {
+                      _hideAllOverlays();
+                      final DateTime? picked = await showDatePicker(
+                        context: context,
+                        initialDate: _selectedDate ?? DateTime.now(),
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime(2030),
+                        builder: (context, child) {
+                          return Theme(
+                            data: ThemeData.light().copyWith(
+                              colorScheme: ColorScheme.light(primary: AppColors.primaryBlue, onPrimary: Colors.white, onSurface: Colors.black),
+                              textButtonTheme: TextButtonThemeData(style: TextButton.styleFrom(foregroundColor: AppColors.primaryBlue)),
+                            ),
+                            child: child!,
+                          );
+                        },
+                      );
+                      if (picked != null) setState(() => _selectedDate = picked);
+                    },
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 10),
+            
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Ruangan Tersedia',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF333333)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+
+            // STREAM BUILDER
+            Expanded(
+              child: !isReadyToSearch
+                  ? Center(
+                      child: Text(
+                        'Pilih Tanggal dulu untuk melihat ruangan.',
+                        style: TextStyle(color: Colors.grey.shade700, fontStyle: FontStyle.italic),
+                      ),
+                    )
+                  : StreamBuilder<QuerySnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('rooms')
+                          .where('is_available', isEqualTo: true)
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        if (snapshot.hasError) {
+                          return const Center(child: Text("Gagal memuat data."));
+                        }
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
+                        }
+
+                        final data = snapshot.data?.docs ?? [];
+
+                        // FILTER LOGIC TETAP ADA (Tapi Cerdas)
+                        final filteredData = data.where((doc) {
+                          var roomData = doc.data() as Map<String, dynamic>;
+                          String location = roomData['location'] ?? '';
+                          
+                          // Kita pakai CONTAINS, bukan ==
+                          // Jadi "Gedung FST A" akan cocok dengan "Gedung FST A Lt. 1"
+                          if (_selectedBuilding != null) {
+                            return location.contains(_selectedBuilding!); 
+                          }
+                          return true;
+                        }).toList();
+
+                        if (filteredData.isEmpty) {
+                          return const Center(child: Text("Tidak ada ruangan di gedung ini."));
+                        }
+
+                        return ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          itemCount: filteredData.length,
+                          itemBuilder: (context, index) {
+                            var roomData = filteredData[index].data() as Map<String, dynamic>;
+                            String docId = filteredData[index].id;
+                            
+                            return _buildRoomCard(roomData, docId);
+                          },
+                        );
+                      },
+                    ),
+            ),
+          ],
         ),
       ),
-
-      bottomNavigationBar: CustomBottomNav(currentIndex: 0),
+      
+      bottomNavigationBar: CustomBottomNav(
+        currentIndex: 0, 
+        user: widget.user,
+      ),
     );
   }
 }

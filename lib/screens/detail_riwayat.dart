@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
 import 'package:url_launcher/url_launcher.dart';
 
 class DetailPeminjamPage extends StatelessWidget {
-  final String namaPeminjam;
-  final String nim;
-  final String noHp;
+  final String userId; // ID User untuk mengambil data live
   final String title;
   final String hariTanggal;
   final String waktu;
@@ -12,9 +11,7 @@ class DetailPeminjamPage extends StatelessWidget {
 
   const DetailPeminjamPage({
     super.key,
-    required this.namaPeminjam,
-    required this.nim,
-    required this.noHp,
+    required this.userId, // Wajib ada
     required this.title,
     required this.hariTanggal,
     required this.waktu,
@@ -22,28 +19,20 @@ class DetailPeminjamPage extends StatelessWidget {
   });
 
   // ------------------------------------------------------
-  // 🔧 FUNGSI FORMAT NOMOR → WAJIB AGAR WA TIDAK JADI +8
+  // 🔧 FUNGSI FORMAT NOMOR
   // ------------------------------------------------------
   String formatPhoneNumber(String phone) {
-    // Hilangkan karakter selain angka
     phone = phone.replaceAll(RegExp(r'[^0-9]'), '');
-
-    // Jika dimulai dengan 0 → ubah ke 62
     if (phone.startsWith('0')) {
       phone = "62" + phone.substring(1);
     }
-
     return phone;
   }
 
-  // ------------------------------------------------------
-  // 🔧 FUNGSI BUKA WHATSAPP (sudah pakai nomor ter-format)
-  // ------------------------------------------------------
-  void launchWhatsApp(String phone, String message) async {
-    // Format nomor sebelum dipakai
+  void launchWhatsApp(String phone, String nama, String judul) async {
     final formattedPhone = formatPhoneNumber(phone);
-
-    final url = Uri.parse("https://wa.me/$formattedPhone?text=$message");
+    final message = "Halo $nama, terkait peminjaman $judul pada $hariTanggal...";
+    final url = Uri.parse("https://wa.me/$formattedPhone?text=${Uri.encodeComponent(message)}");
 
     if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
       throw "Tidak dapat membuka WhatsApp";
@@ -52,13 +41,8 @@ class DetailPeminjamPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Nomor yang ditampilkan juga akan otomatis ter-format
-    final formattedDisplayPhone = formatPhoneNumber(noHp);
-
     return Scaffold(
       backgroundColor: Colors.white,
-
-      // ================= APPBAR ===================
       appBar: AppBar(
         backgroundColor: const Color(0xFF063DA7),
         elevation: 0,
@@ -68,123 +52,125 @@ class DetailPeminjamPage extends StatelessWidget {
         ),
         title: const Text(
           "Detail Peminjam",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.orange,
-            fontSize: 20,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange, fontSize: 20),
         ),
       ),
+      
+      // MENGGUNAKAN FUTURE BUILDER UNTUK AMBIL DATA LIVE DARI FIREBASE
+      body: FutureBuilder<DocumentSnapshot>(
+        future: FirebaseFirestore.instance.collection('users').doc(userId).get(),
+        builder: (context, snapshot) {
+          // 1. Loading State
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-      // ================= BODY ===================
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            const SizedBox(height: 40),
+          // 2. Error / Data Kosong
+          if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.exists) {
+            return const Center(child: Text("Data pengguna tidak ditemukan"));
+          }
 
-            Center(
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  color: Colors.white,
-                  border: Border.all(color: Colors.blue.shade100, width: 2),
-                  boxShadow: [
-                    BoxShadow(
-                      blurRadius: 6,
-                      offset: Offset(0, 3),
-                      color: Colors.blue.shade100,
+          // 3. Data Tersedia
+          final userData = snapshot.data!.data() as Map<String, dynamic>;
+          final String namaPeminjam = userData['full_name'] ?? 'Tanpa Nama';
+          final String email = userData['email'] ?? '-';
+          final String nim = email.contains('@') ? email.split('@')[0].toUpperCase() : '-';
+          final String noHp = userData['phone_number'] ?? '-';
+          final String? photoUrl = userData['photo_url'];
+
+          // UI TAMPILAN
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                const SizedBox(height: 40),
+                Center(
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.white,
+                      border: Border.all(color: Colors.blue.shade100, width: 2),
+                      boxShadow: [
+                        BoxShadow(blurRadius: 6, offset: Offset(0, 3), color: Colors.blue.shade100),
+                      ],
                     ),
-                  ],
-                ),
-
-                // ================= CARD CONTENT ===================
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // Title Ruangan/Barang
-                    Text(
-                      title,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        color: Colors.blue,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Info hari, waktu, status
-                    infoRow("Hari, Tanggal:", hariTanggal),
-                    infoRow("Waktu:", waktu),
-                    infoRow("Status:", status),
-                    const Divider(height: 30, thickness: 1),
-
-                    // Foto Profil
-                    const CircleAvatar(
-                      radius: 40,
-                      backgroundColor: Colors.grey,
-                      child: Icon(Icons.person, color: Colors.white, size: 50),
-                    ),
-                    const SizedBox(height: 10),
-
-                    // Peminjam info
-                    Text(
-                      namaPeminjam,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(nim, style: const TextStyle(color: Colors.black87)),
-
-                    // ==== nomor HP tampil dalam format internasional ====
-                    Text(
-                      formattedDisplayPhone,
-                      style: const TextStyle(color: Colors.black87),
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    // Tombol WhatsApp muncul jika status terlambat
-                    if (status.toLowerCase() == "terlambat") ...[
-                      const SizedBox(height: 10),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          title,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontSize: 18, color: Colors.blue, fontWeight: FontWeight.bold),
                         ),
-                        onPressed: () {
-                          launchWhatsApp(
-                            noHp, // nomor mentah (nanti diformat)
-                            "Halo $namaPeminjam, terkait peminjaman $title...",
-                          );
-                        },
-                        child: const Text(
-                          "Hubungi via WhatsApp",
-                          style: TextStyle(color: Colors.white),
+                        const SizedBox(height: 20),
+
+                        _infoRow("Hari, Tanggal:", hariTanggal),
+                        _infoRow("Waktu:", waktu),
+                        _infoRow("Status:", status),
+                        const Divider(height: 30, thickness: 1),
+
+                        // --- FOTO PROFIL LIVE ---
+                        Container(
+                          width: 90,
+                          height: 90,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade200,
+                            shape: BoxShape.circle,
+                            image: (photoUrl != null && photoUrl.isNotEmpty)
+                                ? DecorationImage(
+                                    image: NetworkImage(photoUrl),
+                                    fit: BoxFit.cover,
+                                  )
+                                : null,
+                          ),
+                          child: (photoUrl == null || photoUrl.isEmpty)
+                              ? Icon(Icons.person, size: 50, color: Colors.grey.shade400)
+                              : null,
                         ),
-                      ),
-                    ],
-                  ],
+                        // ------------------------
+
+                        const SizedBox(height: 10),
+
+                        Text(
+                          namaPeminjam,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                        Text(nim, style: const TextStyle(color: Colors.black87)),
+                        Text(formatPhoneNumber(noHp), style: const TextStyle(color: Colors.black87)),
+
+                        const SizedBox(height: 10),
+
+                        // Tombol WA (Hanya jika ada nomor HP)
+                        if (status.toLowerCase() == "terlambat" || status.toLowerCase() == "disetujui") ...[
+                          const SizedBox(height: 10),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
+                            onPressed: (noHp == '-' || noHp.isEmpty) 
+                              ? null // Disable jika tidak ada nomor
+                              : () => launchWhatsApp(noHp, namaPeminjam, title),
+                            child: const Text("Hubungi via WhatsApp", style: TextStyle(color: Colors.white)),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
-  Widget infoRow(String label, String value) {
+  Widget _infoRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:educycle/constants/colors.dart';
-import 'package:educycle/widgets/navbar.dart'; // Import layout navbar
+import 'package:educycle/widgets/navbar.dart';
+import '../../models/user_model.dart';
+import '../../services/loan_service.dart';
+import 'status_peminjaman_page.dart'; // Import Wajib
 
 class DetailPeminjamanRuanganArguments {
   final String roomName;
@@ -19,7 +22,8 @@ class DetailPeminjamanRuanganArguments {
 }
 
 class DetailPeminjamanRuangan extends StatefulWidget {
-  const DetailPeminjamanRuangan({super.key});
+  final UserModel user;
+  const DetailPeminjamanRuangan({super.key, required this.user});
 
   @override
   State<DetailPeminjamanRuangan> createState() =>
@@ -27,7 +31,10 @@ class DetailPeminjamanRuangan extends StatefulWidget {
 }
 
 class _DetailPeminjamanRuanganState extends State<DetailPeminjamanRuangan> {
+  // DUA WAKTU: MULAI & SELESAI
   TimeOfDay? _selectedStartTime;
+  TimeOfDay? _selectedEndTime;
+
   late DetailPeminjamanRuanganArguments _data;
   final List<String> _selectedItems = [];
   final List<String> _availableItems = [
@@ -36,6 +43,8 @@ class _DetailPeminjamanRuanganState extends State<DetailPeminjamanRuangan> {
     'Proyektor',
     'Layar Proyektor',
   ];
+  
+  bool _isSubmitting = false;
 
   @override
   void didChangeDependencies() {
@@ -44,7 +53,6 @@ class _DetailPeminjamanRuanganState extends State<DetailPeminjamanRuangan> {
       final rawArgs =
           ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
 
-      
       _data = DetailPeminjamanRuanganArguments(
         roomName: rawArgs['roomName'] as String,
         roomId: rawArgs['roomId'] as String,
@@ -53,6 +61,7 @@ class _DetailPeminjamanRuanganState extends State<DetailPeminjamanRuangan> {
         selectedBuilding: rawArgs['selectedBuilding'] as String?,
       );
     } else {
+      // Data Dummy untuk debug
       _data = DetailPeminjamanRuanganArguments(
         roomName: 'Ruang Serbaguna A201',
         roomId: 'A201',
@@ -63,25 +72,15 @@ class _DetailPeminjamanRuanganState extends State<DetailPeminjamanRuangan> {
     }
   }
 
-  Future<void> _pickTime() async {
+  // FUNGSI PICKER WAKTU (START/END)
+  Future<void> _pickTime(bool isStart) async {
     final TimeOfDay? newTime = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
       builder: (context, child) {
-        final primaryColor = AppColors.primaryBlue;
         return Theme(
           data: ThemeData.light().copyWith(
-            colorScheme: ColorScheme.light(
-              primary: primaryColor,
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: Colors.black,
-            ),
-            textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(
-                foregroundColor: primaryColor,
-              ),
-            ),
+            colorScheme: ColorScheme.light(primary: AppColors.primaryBlue, onPrimary: Colors.white, onSurface: Colors.black),
           ),
           child: child!,
         );
@@ -90,7 +89,12 @@ class _DetailPeminjamanRuanganState extends State<DetailPeminjamanRuangan> {
 
     if (newTime != null) {
       setState(() {
-        _selectedStartTime = newTime;
+        if (isStart) {
+          _selectedStartTime = newTime;
+          _selectedEndTime = null; // Reset end time jika start berubah
+        } else {
+          _selectedEndTime = newTime;
+        }
       });
     }
   }
@@ -139,115 +143,100 @@ class _DetailPeminjamanRuanganState extends State<DetailPeminjamanRuangan> {
     );
   }
 
-  void _submitPeminjaman() {
-    if (_selectedStartTime == null) {
+  // --- LOGIKA TRANSAKSI ---
+  void _submitPeminjaman() async {
+    // Validasi Waktu Lengkap
+    if (_selectedStartTime == null || _selectedEndTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mohon pilih Jam Peminjaman.')),
+        const SnackBar(content: Text('Mohon isi Jam Mulai dan Jam Selesai.')),
       );
       return;
     }
 
-    final endTime = _selectedStartTime!.replacing(
-      hour: (_selectedStartTime!.hour + 2) % 24,
-      minute: _selectedStartTime!.minute,
-    );
+    // Validasi Logika: End harus > Start
+    final double startDouble = _selectedStartTime!.hour + _selectedStartTime!.minute / 60.0;
+    final double endDouble = _selectedEndTime!.hour + _selectedEndTime!.minute / 60.0;
 
-    final timeRange =
-        "${_selectedStartTime!.format(context)} - ${endTime.format(context)} WIB";
-    final roomDisplay =
-        "${_data.roomName}${_data.selectedBuilding != null ? ' (${_data.selectedBuilding})' : ''}";
-    final additionalItems =
-        _selectedItems.isEmpty ? 'Tidak ada' : _selectedItems.join(', ');
+    if (endDouble <= startDouble) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Jam Selesai harus lebih besar dari Jam Mulai.')),
+      );
+      return;
+    }
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext dialogContext) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: const Color(0xFFE8EAF6),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.info_outline,
-                  size: 32,
-                  color: Colors.grey.shade700,
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Permintaan peminjaman telah diajukan.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: Color(0xFF1A1A1A),
-                    fontWeight: FontWeight.w600,
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  'Mohon tunggu persetujuan dari staf.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: Color(0xFF1A1A1A),
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF3B82F6),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(50),
-                      ),
-                      elevation: 0,
-                    ),
+    // Format Waktu Range
+    final timeString = "${_selectedStartTime!.format(context)} - ${_selectedEndTime!.format(context)} WIB";
+    final additionalItemsStr = _selectedItems.isEmpty ? '-' : _selectedItems.join(', ');
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      await LoanService().createLoan(
+        type: 'ruangan',
+        assetId: _data.roomId,
+        assetName: _data.roomName,
+        building: _data.selectedBuilding ?? 'Gedung FST',
+        date: _data.selectedDateString,
+        time: timeString, // Gunakan hasil range
+        additionalItems: additionalItemsStr,
+      );
+
+      if (!mounted) return;
+
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext dialogContext) {
+          return Dialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.check_circle, size: 48, color: Colors.green),
+                  const SizedBox(height: 16),
+                  const Text("Permintaan Terkirim!", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryBlue),
                     onPressed: () {
                       Navigator.pop(dialogContext);
-                      Navigator.pushNamed(
+                      
+                      // Navigasi ke Status
+                      Navigator.push(
                         context,
-                        '/status_peminjaman',
-                        arguments: {
-                          'type': 'ruangan',
-                          'roomName': roomDisplay,
-                          'roomId': _data.roomId,
-                          'building': _data.selectedBuilding,
-                          'date': _data.selectedDateString,
-                          'time': timeRange,
-                          'additionalItems': additionalItems,
-                          'capacity': _data.capacity,
-                          'status': 'Menunggu Persetujuan',
-                        },
+                        MaterialPageRoute(
+                          builder: (context) => StatusPeminjamanPage(user: widget.user),
+                          settings: RouteSettings(
+                            arguments: {
+                              'type': 'ruangan',
+                              'roomName': _data.roomName,
+                              'date': _data.selectedDateString,
+                              'time': timeString,
+                              'status': 'Menunggu Persetujuan',
+                              'itemCode': _data.roomId,
+                            },
+                          ),
+                        ),
                       );
                     },
-                    child: const Text(
-                      'Lihat Status Peminjaman',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
+                    child: const Text("Lihat Status", style: TextStyle(color: Colors.white)),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        );
-      },
-    );
+          );
+        },
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Gagal: $e"), backgroundColor: Colors.red),
+      );
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   Widget _buildReadonlyField(String label, String value) {
@@ -256,66 +245,93 @@ class _DetailPeminjamanRuanganState extends State<DetailPeminjamanRuangan> {
       children: [
         Padding(
           padding: const EdgeInsets.only(bottom: 8.0),
-          child: Text(label,
-              style:
-                  const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          child: Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         ),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey.shade400)),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey.shade400),
+          ),
           width: double.infinity,
           child: Text(value, style: const TextStyle(fontSize: 16)),
         ),
-        const SizedBox(height: 16)
+        const SizedBox(height: 16),
       ],
     );
   }
 
-  Widget _buildTimeInputField() {
-    final endTime = _selectedStartTime != null
-        ? _selectedStartTime!.replacing(
-            hour: (_selectedStartTime!.hour + 2) % 24,
-            minute: _selectedStartTime!.minute)
-        : null;
-
-    final timeRange = (_selectedStartTime != null && endTime != null)
-        ? "${_selectedStartTime!.format(context)} - ${endTime.format(context)} WIB"
-        : "Pilih Jam";
-
+  // WIDGET UI RANGE PICKER (GANTI PICKER LAMA)
+  Widget _buildTimeRangePicker() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Padding(
           padding: EdgeInsets.only(bottom: 8.0),
-          child: Text("Jam",
-              style:
-                  TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          child: Text("Durasi Peminjaman", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         ),
-        InkWell(
-          onTap: _pickTime,
-          child: Container(
-            height: 50,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey.shade400),
-              color: Colors.white,
-            ),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                timeRange,
-                style: TextStyle(
-                    fontSize: 16,
-                    color: _selectedStartTime == null
-                        ? Colors.grey.shade600
-                        : Colors.black87),
+        Row(
+          children: [
+            // JAM MULAI
+            Expanded(
+              child: InkWell(
+                onTap: () => _pickTime(true),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey.shade400),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _selectedStartTime?.format(context) ?? "Mulai",
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: _selectedStartTime == null ? Colors.grey : Colors.black87
+                        ),
+                      ),
+                      const Icon(Icons.access_time, size: 20, color: Colors.grey),
+                    ],
+                  ),
+                ),
               ),
             ),
-          ),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 10),
+              child: Text("-", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            ),
+            // JAM SELESAI
+            Expanded(
+              child: InkWell(
+                onTap: () => _pickTime(false),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey.shade400),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _selectedEndTime?.format(context) ?? "Selesai",
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: _selectedEndTime == null ? Colors.grey : Colors.black87
+                        ),
+                      ),
+                      const Icon(Icons.access_time_filled, size: 20, color: Colors.grey),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 16),
       ],
@@ -328,10 +344,7 @@ class _DetailPeminjamanRuanganState extends State<DetailPeminjamanRuangan> {
       children: [
         const Padding(
           padding: EdgeInsets.only(bottom: 8.0),
-          child: Text(
-            "Barang tambahan",
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
+          child: Text("Barang tambahan", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         ),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -358,68 +371,48 @@ class _DetailPeminjamanRuanganState extends State<DetailPeminjamanRuangan> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new,
-              color: Color(0xFFF59E0B), size: 28),
-          onPressed: () =>
-              Navigator.pushNamed(context, '/peminjaman_ruangan'),
+          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFFF59E0B), size: 28),
+          onPressed: () => Navigator.pop(context),
         ),
         backgroundColor: primaryColor,
         elevation: 0,
         centerTitle: true,
-        title: const Text(
-          'Peminjaman',
-          style: TextStyle(
-            color: accentColor,
-            fontWeight: FontWeight.bold,
-            fontSize: 24,
-          ),
-        ),
-        actions: [
-          InkWell(
-            onTap: () {
-              Navigator.pushNamed(context, '/notification');
-            },
-            child: const Padding(
-              padding: EdgeInsets.only(right: 16.0),
-              child: Icon(Icons.notifications_none,
-                  color: accentColor, size: 28),
-            ),
-          ),
-        ],
+        title: const Text('Peminjaman', style: TextStyle(color: accentColor, fontWeight: FontWeight.bold, fontSize: 24)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildReadonlyField("Ruangan",
-                "${_data.roomName} (${_data.selectedBuilding ?? 'N/A'})"),
+            _buildReadonlyField(
+              "Ruangan",
+              "${_data.roomName} (${_data.selectedBuilding ?? 'N/A'})",
+            ),
             _buildReadonlyField("Hari, Tanggal", _data.selectedDateString),
-            _buildTimeInputField(),
+            
+            // GANTI PICKER LAMA DENGAN RANGE PICKER
+            _buildTimeRangePicker(),
+            
             _buildAdditionalItemsSection(),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _submitPeminjaman,
+                onPressed: _isSubmitting ? null : _submitPeminjaman,
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFF59E0B),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8))),
-                child: const Text(
-                  "Ajukan",
-                  style: TextStyle(
-                      color: Colors.black87,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18),
+                  backgroundColor: const Color(0xFFF59E0B),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
+                child: _isSubmitting 
+                  ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white))
+                  : const Text("Ajukan", style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 18)),
               ),
             ),
           ],
         ),
       ),
-      
-      bottomNavigationBar: CustomBottomNav(currentIndex: 0),
+
+      bottomNavigationBar: CustomBottomNav(currentIndex: 0, user: widget.user),
     );
   }
-} 
+}

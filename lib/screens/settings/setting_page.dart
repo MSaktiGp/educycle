@@ -1,238 +1,128 @@
+import 'package:educycle/screens/profile_page.dart';
 import 'package:flutter/material.dart';
 import 'package:educycle/constants/colors.dart';
-import 'package:educycle/widgets/navbar.dart'; // Import layout navbar
+import '../../widgets/navbar.dart';
+import '../../models/user_model.dart'; // 1. Import Model
 
-class SettingsPage extends StatelessWidget {
-  const SettingsPage({super.key});
+// Import Halaman Sub-Menu (Pastikan file ini ada)
+import 'language_page.dart';
+import 'laporan_masalah_page.dart';
+import 'faq_page.dart';
+import '../login_page.dart'; // Untuk Logout
+import '../../services/auth_service.dart'; // Untuk Logout
 
-  // FUNGSI DIALOG LOGOUT 
-  void _showLogoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: const Color(0xFFD6E4F5),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  "Apakah Anda yakin ingin keluar?",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: Colors.black87,
-                    fontWeight: FontWeight.w600,
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SizedBox(
-                      width: 100,
-                      height: 40,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFEF4444),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          elevation: 0,
-                        ),
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: const Text(
-                          "Tidak",
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    SizedBox(
-                      width: 100,
-                      height: 40,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF10B981),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          elevation: 0,
-                        ),
-                        onPressed: () {
-                          Navigator.pop(context);
-                          Navigator.pushNamedAndRemoveUntil(
-                            context,
-                            '/',
-                            (route) => false,
-                          );
-                        },
-                        child: const Text(
-                          "Ya",
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
+class SettingPage extends StatelessWidget {
+  final UserModel user; // 2. Siapkan variabel penampung
+
+  const SettingPage({
+    super.key,
+    required this.user, // 3. Wajibkan saat dipanggil
+  });
+
+  // Fungsi Logout
+  void _handleLogout(BuildContext context) async {
+    await AuthService().signOut();
+    if (context.mounted) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const LoginPage()),
+        (route) => false,
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF5F5F5),
-
-
-      // APP BAR
       appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: AppColors.primaryBlue,
-        elevation: 0,
-        centerTitle: true,
-
         title: const Text(
-            'Pengaturan',
-            style: TextStyle(
-                color:Color(0xFFF59E0B),
-                fontWeight: FontWeight.bold,
-                fontSize: 24,
-            ),
+          'Settings',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
         ),
-        
-        actions: [
-          // Tombol Notifikasi
-          InkWell(
-            onTap: () => Navigator.pushNamed(context, '/notification'),
-            child: const Padding(
-              padding: EdgeInsets.only(right: 16.0),
-              child: Icon(Icons.notifications_none, color: Color(0xFFF59E0B), size: 28),
+        backgroundColor: AppColors.primaryBlue,
+        foregroundColor: Colors.white,
+        automaticallyImplyLeading:
+            false, // Hilangkan tombol back karena ada Navbar
+        centerTitle: true,
+      ),
+      body: ListView(
+        children: [
+          // Section Akun
+          ListTile(
+            leading: const Icon(Icons.person, color: AppColors.primaryBlue),
+            title: const Text('Akun Saya'),
+            subtitle: Text(user.fullName), // Tampilkan nama user
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ProfilePage(user: user),
+                ),
+              );
+            },
+          ),
+          const Divider(),
+
+          // Menu Bahasa
+          ListTile(
+            leading: const Icon(Icons.language, color: Colors.orange),
+            title: const Text('Bahasa'),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const LanguagePage()),
+              );
+            },
+          ),
+
+          // Menu FAQ
+          ListTile(
+            leading: const Icon(Icons.help_outline, color: Colors.green),
+            title: const Text('FAQ'),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const FAQPage()),
+              );
+            },
+          ),
+
+          // Menu Lapor Masalah
+          ListTile(
+            leading: const Icon(
+              Icons.report_problem_outlined,
+              color: Colors.red,
             ),
+            title: const Text('Laporkan Masalah'),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const LaporanMasalahPage()),
+              );
+            },
+          ),
+
+          const Divider(),
+
+          // Tombol Logout
+          ListTile(
+            leading: const Icon(Icons.logout, color: Colors.red),
+            title: const Text(
+              'Keluar',
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+            ),
+            onTap: () => _handleLogout(context),
           ),
         ],
-      ), 
-
-      // BODY
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _menuItem(
-              title: "Bahasa",
-              onTap: () {
-                Navigator.pushNamed(context, "/bahasa");
-              },
-            ),
-            const SizedBox(height: 12),
-
-            _menuItem(
-              title: "FAQ",
-              onTap: () {
-                Navigator.pushNamed(context, "/faq");
-              },
-            ),
-            const SizedBox(height: 12),
-
-            _menuItem(
-              title: "Laporan Masalah",
-              onTap: () {
-                Navigator.pushNamed(context, "/laporan_masalah");
-              },
-            ),
-
-            const Spacer(),
-
-            
-
-            // LOGOUT BUTTON - HANYA BAGIAN INI YANG BERUBAH
-            SizedBox(
-              width: double.infinity,
-              height: 55,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xffFF4D4D),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  elevation: 3,
-                ),
-                onPressed: () {
-                  _showLogoutDialog(context);
-                },
-                child: const Text(
-                  "Log out",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
 
-      // BOTTOM NAVIGATION BAR
-      bottomNavigationBar: const CustomBottomNav(currentIndex: 1),
-    );
-  }
-
-  // MENU ITEM WIDGET
-  Widget _menuItem({
-    required String title,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.primaryBlue, width: 1.3),
-
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: Color(0xff1A1A1A),
-              ),
-            ),
-            const Icon(Icons.arrow_forward_ios, size: 18),
-          ],
-        ),
+      // 4. Pasang Navbar dengan data user
+      bottomNavigationBar: CustomBottomNav(
+        currentIndex: 1, // Index 1 = Settings
+        user: user, // Oper data user agar navigasi tidak putus
       ),
     );
   }

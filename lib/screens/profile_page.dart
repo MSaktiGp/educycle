@@ -1,121 +1,173 @@
-import 'package:educycle/constants/colors.dart';
 import 'package:flutter/material.dart';
-import '../widgets/profile_info_row.dart'; 
-import 'package:educycle/widgets/navbar.dart'; 
+import 'package:educycle/constants/colors.dart';
+import '../widgets/navbar.dart';
+import '../models/user_model.dart';
+import '../widgets/profile_info_row.dart';
 
 class ProfilePage extends StatelessWidget {
-  const ProfilePage({super.key});
+  final UserModel user;
+
+  const ProfilePage({
+    super.key,
+    required this.user,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-
-    // --- Data Mockup Sesuai Gambar ---
-    const String userName = 'Adit Mahardika';
-    const String nim = 'F1E123018';
-    const String programStudi = 'Sistem Informasi';
-    const String status = 'Mahasiswa';
-    const String noHp = '082345678910';
-    const String avatarAsset = 'assets/images/MyFoto.jpg'; 
-
+    // Logika NIM: Ambil dari bagian depan email jika formatnya angka (misal f1e...@unja)
+    String nimDisplay = user.email.split('@')[0].toUpperCase();
+    
     return Scaffold(
-      backgroundColor: Color(0xFFF5F5F5),
-      
-      // 1. App Bar (Bagian Biru di atas)
+      backgroundColor: const Color(0xFFF5F5F5), // Background abu-abu muda
       appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: AppColors.primaryBlue,
-        elevation: 0,
-        centerTitle: true,
-
         title: const Text(
-            'Profil',
-            style: TextStyle(
-                color:Color(0xFFF59E0B),
-                fontWeight: FontWeight.bold,
-                fontSize: 24,
-            ),
+          'Profile',
+          style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.secondaryOrange, fontSize: 24),
         ),
-        
-        actions: [
-          // Tombol Notifikasi
-          InkWell(
-            onTap: () => Navigator.pushNamed(context, '/notification'),
-            child: const Padding(
-              padding: EdgeInsets.only(right: 16.0),
-              child: Icon(Icons.notifications_none, color: Color(0xFFF59E0B), size: 28),
-            ),
-          ),
-        ],
-      ), 
-
-      // 2. Body Halaman
+        backgroundColor: AppColors.primaryBlue,
+        elevation: 0, // Hilangkan bayangan agar menyatu dengan body
+        automaticallyImplyLeading: false,
+        centerTitle: true,
+      ),
+      
       body: SingleChildScrollView(
         child: Column(
           children: [
-            Container(
-              width: size.width,
-              padding: const EdgeInsets.only(top: 20, bottom: 30),
-              color: Color(0xFFF5F5F5), 
-              child: Column(
-                children: [
-                  // Avatar
-                  CircleAvatar(
-                    radius: 60,
-                    backgroundColor: AppColors.primaryBlue.withOpacity(0.1),
-                    backgroundImage: const AssetImage(avatarAsset),
-                  ),
-                  const SizedBox(height: 12),
-                  
-                  // Nama Pengguna
-                  Text(
-                    userName,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textDark,
+            // ================= HEADER BIRU & AVATAR =================
+            Stack(
+              clipBehavior: Clip.none, // Izinkan elemen keluar dari kotak stack
+              alignment: Alignment.center,
+              children: [
+                // 1. Background Biru
+                Container(
+                  height: 120,
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    color: AppColors.primaryBlue,
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(30),
+                      bottomRight: Radius.circular(30),
                     ),
                   ),
-                ],
-              ),
+                ),
+
+                // 2. Avatar & Nama (Posisi agak turun menimpa batas biru)
+                Positioned(
+                  top: 20, 
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(4), // Border putih avatar
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: CircleAvatar(
+                          radius: 50,
+                          backgroundColor: Colors.grey[200],
+                          backgroundImage: (user.photoUrl != null && user.photoUrl!.isNotEmpty)
+                              ? NetworkImage(user.photoUrl!)
+                              : null,
+                          child: (user.photoUrl == null || user.photoUrl!.isEmpty)
+                              ? Text(
+                                  user.fullName.isNotEmpty ? user.fullName[0].toUpperCase() : '?',
+                                  style: const TextStyle(fontSize: 40, color: AppColors.primaryBlue),
+                                )
+                              : null,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      
+                      // Nama User
+                      Text(
+                        user.fullName,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textDark, // Warna gelap karena sudah keluar dari area biru
+                        ),
+                      ),
+                      
+                      // Role Badge (Pill Shape)
+                      const SizedBox(height: 5),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: user.isStaff ? Colors.orange.withOpacity(0.2) : Colors.blue.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: user.isStaff ? Colors.orange : Colors.blue,
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          user.isStaff ? "Administrator" : "Mahasiswa",
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: user.isStaff ? Colors.orange[800] : Colors.blue[800],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
 
-            // Card Informasi Detail
+            // Memberi jarak karena Avatar kita geser pakai Stack
+            const SizedBox(height: 100), 
+
+            // ================= DATA CARD =================
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Container(
                 decoration: BoxDecoration(
-                  color: Color(0xFFF5F5F5),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppColors.borderGray, width: 1),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(15),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primaryBlue.withOpacity(0.1),
+                      color: Colors.black.withOpacity(0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 5),
                     ),
                   ],
                 ),
-                child: const Column(
+                child: Column(
                   children: [
-                    ProfileInfoRow(label: 'NIM', value: nim),
-                    ProfileInfoRow(label: 'Program Studi', value: programStudi),
-                    ProfileInfoRow(label: 'Status', value: status),
+                    // Menggunakan Widget Baru yang Rapi
                     ProfileInfoRow(
-                      label: 'No. HP',
-                      value: noHp,
-                      isLast: true, 
+                      label: user.isStaff ? 'NIP' : 'NIM',
+                      value: nimDisplay,
+                      icon: Icons.badge_outlined,
                     ),
+                    ProfileInfoRow(
+                      label: 'Status',
+                      value: user.isStaff ? 'Staf Tata Usaha' : 'Mahasiswa',
+                      icon: user.isStaff ? Icons.admin_panel_settings_outlined : Icons.school_outlined,
+                    ),
+                    ProfileInfoRow(
+                      label: 'No. Telepon',
+                      value: user.phoneNumber ?? '-',
+                      icon: Icons.phone_android_outlined,
+                    ),
+                    // Jika ada Program Studi di data user model, tampilkan disini
+                    // ProfileInfoRow(label: 'Prodi', value: 'Sistem Informasi', icon: Icons.school_outlined, isLast: true),
                   ],
                 ),
               ),
             ),
             
-            SizedBox(height: size.height * 0.2),
+            const SizedBox(height: 30),
           ],
         ),
       ),
-       bottomNavigationBar: CustomBottomNav(currentIndex: 2),
+
+      // Navbar Wajib
+      bottomNavigationBar: CustomBottomNav(
+        currentIndex: 2, // Index Profil
+        user: user,
+      ),
     );
   }
 }
