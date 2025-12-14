@@ -175,14 +175,12 @@ class _RiwayatPageState extends State<RiwayatPage> {
             context,
             MaterialPageRoute(
               builder: (_) => DetailPeminjamPage(
-                // Data Transaksi (Tetap dikirim karena ini data mati/riwayat)
                 title: title,
                 hariTanggal: date,
                 waktu: time,
                 status: status,
-
-                // Data User: CUKUP KIRIM ID-NYA SAJA
-                userId: item['userId'], // <--- KUNCI UTAMA
+                userId: item['userId'],
+                isStaff: widget.user.isStaff,
               ),
             ),
           );

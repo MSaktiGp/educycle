@@ -1,26 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class DetailPeminjamPage extends StatelessWidget {
-  final String userId; // ID User untuk mengambil data live
+  final String userId; 
   final String title;
   final String hariTanggal;
   final String waktu;
   final String status;
+  final bool isStaff; // Variabel Penentu Hak Akses
 
   const DetailPeminjamPage({
     super.key,
-    required this.userId, // Wajib ada
+    required this.userId,
     required this.title,
     required this.hariTanggal,
     required this.waktu,
     required this.status,
+    required this.isStaff, // Wajib diisi saat navigasi
   });
 
-  // ------------------------------------------------------
-  // 🔧 FUNGSI FORMAT NOMOR
-  // ------------------------------------------------------
   String formatPhoneNumber(String phone) {
     phone = phone.replaceAll(RegExp(r'[^0-9]'), '');
     if (phone.startsWith('0')) {
@@ -56,21 +55,17 @@ class DetailPeminjamPage extends StatelessWidget {
         ),
       ),
       
-      // MENGGUNAKAN FUTURE BUILDER UNTUK AMBIL DATA LIVE DARI FIREBASE
       body: FutureBuilder<DocumentSnapshot>(
         future: FirebaseFirestore.instance.collection('users').doc(userId).get(),
         builder: (context, snapshot) {
-          // 1. Loading State
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          // 2. Error / Data Kosong
           if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.exists) {
             return const Center(child: Text("Data pengguna tidak ditemukan"));
           }
 
-          // 3. Data Tersedia
           final userData = snapshot.data!.data() as Map<String, dynamic>;
           final String namaPeminjam = userData['full_name'] ?? 'Tanpa Nama';
           final String email = userData['email'] ?? '-';
@@ -78,7 +73,6 @@ class DetailPeminjamPage extends StatelessWidget {
           final String noHp = userData['phone_number'] ?? '-';
           final String? photoUrl = userData['photo_url'];
 
-          // UI TAMPILAN
           return SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -111,7 +105,6 @@ class DetailPeminjamPage extends StatelessWidget {
                         _infoRow("Status:", status),
                         const Divider(height: 30, thickness: 1),
 
-                        // --- FOTO PROFIL LIVE ---
                         Container(
                           width: 90,
                           height: 90,
@@ -129,7 +122,6 @@ class DetailPeminjamPage extends StatelessWidget {
                               ? Icon(Icons.person, size: 50, color: Colors.grey.shade400)
                               : null,
                         ),
-                        // ------------------------
 
                         const SizedBox(height: 10),
 
@@ -139,12 +131,15 @@ class DetailPeminjamPage extends StatelessWidget {
                           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                         Text(nim, style: const TextStyle(color: Colors.black87)),
-                        Text(formatPhoneNumber(noHp), style: const TextStyle(color: Colors.black87)),
+                        
+                        // Tampilkan No HP hanya jika Admin
+                        if (isStaff)
+                          Text(formatPhoneNumber(noHp), style: const TextStyle(color: Colors.black87)),
 
                         const SizedBox(height: 10),
 
-                        // Tombol WA (Hanya jika ada nomor HP)
-                        if (status.toLowerCase() == "terlambat" || status.toLowerCase() == "disetujui") ...[
+                        // LOGIKA TOMBOL WA: Hanya muncul jika USER ADALAH STAFF
+                        if (isStaff && (status.toLowerCase() == "terlambat" || status.toLowerCase() == "disetujui")) ...[
                           const SizedBox(height: 10),
                           ElevatedButton(
                             style: ElevatedButton.styleFrom(
@@ -153,7 +148,7 @@ class DetailPeminjamPage extends StatelessWidget {
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                             ),
                             onPressed: (noHp == '-' || noHp.isEmpty) 
-                              ? null // Disable jika tidak ada nomor
+                              ? null 
                               : () => launchWhatsApp(noHp, namaPeminjam, title),
                             child: const Text("Hubungi via WhatsApp", style: TextStyle(color: Colors.white)),
                           ),
