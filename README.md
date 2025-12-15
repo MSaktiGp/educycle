@@ -1,6 +1,6 @@
 <div align="center">
 
-  <img src="assets/logo.png" alt="EduCycle Logo" width="150" height="150">
+  <img src="assets/images/EduCycle_Logo.jpg" alt="EduCycle Logo" width="150" height="150">
 
   # EduCycle
   
@@ -114,3 +114,4 @@ Proyek ini disusun untuk memenuhi tugas Pemrograman Mobile di Universitas Jambi 
   Copyright © 2025 EduCycle Team. All rights reserved.<br>
   Dibuat dengan ❤️ menggunakan Flutter.
 </div>
+
