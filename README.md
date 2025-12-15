@@ -4,7 +4,7 @@
 
   # EduCycle
   
-  **Sistem Manajemen Peminjaman Inventaris & Ruangan (FST UNJA)**
+  **Sistem Manajemen Peminjaman Inventaris & Ruangan (Beta Ver)**
 
   [![Flutter](https://img.shields.io/badge/Flutter-3.0%2B-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev/)
   [![Dart](https://img.shields.io/badge/Dart-3.0%2B-0175C2?style=for-the-badge&logo=dart&logoColor=white)](https://dart.dev/)
@@ -114,5 +114,6 @@ Proyek ini disusun untuk memenuhi tugas Pemrograman Mobile di Universitas Jambi 
   Copyright © 2025 EduCycle Team. All rights reserved.<br>
   Dibuat dengan ❤️ menggunakan Flutter.
 </div>
+
 
 
