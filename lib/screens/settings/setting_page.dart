@@ -48,7 +48,13 @@ class SettingPage extends StatelessWidget {
         children: [
           // Section Akun
           ListTile(
-            leading: const Icon(Icons.person, color: AppColors.primaryBlue),
+            // leading: const Icon(Icons.person, color: AppColors.primaryBlue),
+            leading: CircleAvatar(
+                          backgroundColor: Colors.grey[200],
+                          backgroundImage: (user.photoUrl != null && user.photoUrl!.isNotEmpty)
+                              ? NetworkImage(user.photoUrl!)
+                              : null,
+                        ),
             title: const Text('Akun Saya'),
             subtitle: Text(user.fullName), // Tampilkan nama user
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),

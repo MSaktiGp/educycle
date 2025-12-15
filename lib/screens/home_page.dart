@@ -152,12 +152,10 @@ class _HomePageState extends State<HomePage> {
                 // 1. Tambahkan Center di sini
                 child: Wrap(
                   spacing:
-                      20, // (Opsional) Perbesar sedikit jarak horizontal biar lega
+                      10,
                   runSpacing: 20,
-                  alignment: WrapAlignment.center, // 2. Ubah jadi center
+                  alignment: WrapAlignment.center, 
                   children: [
-                    // ... (Daftar tombol _buildMenuButton biarkan tetap sama) ...
-                    // Copy-paste tombol-tombol dari kode lama Anda di sini
 
                     // MENU UMUM
                     _buildMenuButton(

@@ -21,12 +21,12 @@ class _KonfirmasiPageState extends State<KonfirmasiPage> {
         backgroundColor: AppColors.primaryBlue,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.secondaryOrange, size: 28),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           "Konfirmasi Peminjaman",
-          style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
+          style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.secondaryOrange),
         ),
         centerTitle: true,
       ),

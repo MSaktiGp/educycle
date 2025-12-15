@@ -1,3 +1,4 @@
+import 'package:educycle/constants/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -57,7 +58,7 @@ class _KonfirmasiDetailPageState extends State<KonfirmasiDetailPage> {
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
         backgroundColor: const Color(0xFF003B80),
-        title: const Text("Detail Pengajuan", style: TextStyle(color: Colors.white)),
+        title: const Text("Detail Pengajuan", style: TextStyle(color: AppColors.secondaryOrange)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),

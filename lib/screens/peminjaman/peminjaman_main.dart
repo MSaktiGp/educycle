@@ -57,12 +57,8 @@ class PeminjamanMain extends StatelessWidget {
       backgroundColor: Colors.white,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new,
-            color: Color(0xFFF59E0B),
-            size: 28,
-          ),
-          onPressed: () => Navigator.pushNamed(context, '/home'),
+          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFFF59E0B), size: 28),
+          onPressed: () => Navigator.pop(context),
         ),
 
         backgroundColor: primaryColor,
