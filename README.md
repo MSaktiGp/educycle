@@ -55,7 +55,7 @@ Aplikasi ini mengatasi masalah sistem manual (Google Form/Kertas) dengan menyedi
     * `google_fonts` (Typography)
     * `url_launcher` (WhatsApp & Call)
     * `intl` (Date Formatting)
-
+<!--
 ## 📸 Galeri Aplikasi
 
 | Login Page | Dashboard | Peminjaman |
@@ -65,14 +65,14 @@ Aplikasi ini mengatasi masalah sistem manual (Google Form/Kertas) dengan menyedi
 | Riwayat | Detail & WA | Admin Approval |
 |:---:|:---:|:---:|
 | <img src="screenshots/history.png" width="200"> | <img src="screenshots/detail.png" width="200"> | <img src="screenshots/admin.png" width="200"> |
-
+-->
 ## 💻 Instalasi (Untuk Developer)
 
 Jika Anda ingin menjalankan *source code* ini di mesin lokal Anda:
 
 1.  **Clone Repository**
     ```bash
-    git clone [https://github.com/MSaktiGp/educycle.git]([https://github.com/USERNAME_ANDA/educycle.git](https://github.com/MSaktiGp/educycle.git))
+    git clone https://github.com/MSaktiGp/educycle.git
     cd educycle
     ```
 
@@ -96,7 +96,7 @@ Jika Anda ingin menjalankan *source code* ini di mesin lokal Anda:
 
 Untuk pengguna Android, silakan unduh versi terbaru di menu **Releases**:
 
-[**Download EduCycle v1.0.0.apk**](https://github.com/USERNAME_ANDA/educycle/releases)
+[**Download EduCycle v1.0.0.apk**](https://github.com/MSaktiGp/educycle/releases)
 
 ## 👥 Tim Pengembang
 
@@ -114,6 +114,7 @@ Proyek ini disusun untuk memenuhi tugas Pemrograman Mobile di Universitas Jambi 
   Copyright © 2025 EduCycle Team. All rights reserved.<br>
   Dibuat dengan ❤️ menggunakan Flutter.
 </div>
+
 
 
 
