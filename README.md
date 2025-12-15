@@ -72,7 +72,7 @@ Jika Anda ingin menjalankan *source code* ini di mesin lokal Anda:
 
 1.  **Clone Repository**
     ```bash
-    git clone [https://github.com/USERNAME_ANDA/educycle.git](https://github.com/USERNAME_ANDA/educycle.git)
+    git clone [https://github.com/MSaktiGp/educycle.git]([https://github.com/USERNAME_ANDA/educycle.git](https://github.com/MSaktiGp/educycle.git))
     cd educycle
     ```
 
@@ -114,4 +114,5 @@ Proyek ini disusun untuk memenuhi tugas Pemrograman Mobile di Universitas Jambi 
   Copyright © 2025 EduCycle Team. All rights reserved.<br>
   Dibuat dengan ❤️ menggunakan Flutter.
 </div>
+
 
