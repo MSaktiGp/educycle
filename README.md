@@ -96,7 +96,7 @@ Jika Anda ingin menjalankan *source code* ini di mesin lokal Anda:
 
 Untuk pengguna Android, silakan unduh versi terbaru di menu **Releases**:
 
-[**Download EduCycle v1.0.0.apk**](https://github.com/MSaktiGp/educycle/releases)
+[**Download EduCycle v0.1.0-beta.apk**](https://github.com/MSaktiGp/educycle/releases)
 
 ## 👥 Tim Pengembang
 
@@ -114,6 +114,7 @@ Proyek ini disusun untuk memenuhi tugas Pemrograman Mobile di Universitas Jambi 
   Copyright © 2025 EduCycle Team. All rights reserved.<br>
   Dibuat dengan ❤️ menggunakan Flutter.
 </div>
+
 
 
 
