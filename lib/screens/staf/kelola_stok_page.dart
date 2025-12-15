@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:educycle/constants/colors.dart';
-import 'tambah_edit_barang_page.dart'; // Kita buat setelah ini
+import 'tambah_edit_barang_page.dart'; 
 
 class KelolaStokPage extends StatelessWidget {
   const KelolaStokPage({super.key});
@@ -11,6 +11,10 @@ class KelolaStokPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFFF59E0B), size: 28),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: const Text("Kelola Inventaris"),
         backgroundColor: const Color(0xFF003B80), // Warna Admin
         foregroundColor: Colors.white,
@@ -29,6 +33,7 @@ class KelolaStokPage extends StatelessWidget {
         icon: const Icon(Icons.add, color: Colors.white),
         label: const Text("Tambah Barang", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
+      
 
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance.collection('items').orderBy('name').snapshots(),

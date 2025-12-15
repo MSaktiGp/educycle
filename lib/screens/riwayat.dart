@@ -22,7 +22,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
         backgroundColor: const Color(0xFF063DA7),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFFF59E0B)),
+          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFFF59E0B), size: 28),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
